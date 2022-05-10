@@ -7,46 +7,39 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
-import android.widget.Toast;
+import android.location.LocationManager;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.CancellationToken;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.OnTokenCanceledListener;
 
 
-import java.text.BreakIterator;
+import java.util.ArrayList;
 
-import static android.telephony.TelephonyManager.NETWORK_TYPE_1xRTT;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_CDMA;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_EDGE;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_EVDO_0;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_EVDO_A;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_EVDO_B;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_GPRS;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_HSDPA;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_HSPA;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_HSPAP;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_IDEN;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_LTE;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_NR;
-import static android.telephony.TelephonyManager.NETWORK_TYPE_UMTS;
+import static com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCURACY;
 
-public class DataCollectorLocation extends AppCompatActivity {
+public class DataCollectorLocation{
 
     private static final int PERMISSIONS_FINE_LOCATION = 99;
-    FusedLocationProviderClient fusedLocationClient;
+    private FusedLocationProviderClient fusedLocationClient;
 
-    LocationRequest locationRequest;
+    private LocationRequest locationRequest;
+
+    private ArrayList<ArrayList<String>> locationData;
 
     private Context context;
 
     public static final int DEFAULT_UPDATE_INTERVAL = 30;
     public static final int FAST_UPDATE_INTERVAL = 5;
+
+    private LocationManager locationManager;
+
 
     public DataCollectorLocation(Context newContext) {
         this.context=newContext;
@@ -56,26 +49,92 @@ public class DataCollectorLocation extends AppCompatActivity {
                 .setFastestInterval(FAST_UPDATE_INTERVAL * 1000)
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
                 .setMaxWaitTime(100);
+
+        LocationManager locationManager = (LocationManager) context.getSystemService(context.LOCATION_SERVICE);
     }
 
+    public ArrayList<ArrayList<String>> getLocationData()
+    {
+        return locationData;
+    }
 
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    public void checkGPSSignal()
+    {
 
-        switch (requestCode) {
-            case PERMISSIONS_FINE_LOCATION:
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    getGPS();
-                } else {
-                    Toast.makeText(context, "This app requires permision to be granted to work properly", Toast.LENGTH_SHORT).show();
+        if(!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER))
+        {
+            //TODO add notification about gps being turned off
+        }
+
+    }
+
+    public void updateLocationList(boolean alreadyUpdated)
+    {
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.getLastLocation().addOnSuccessListener((Activity) context, new OnSuccessListener<Location>() {
+                @Override
+                public void onSuccess(Location location) {
+
+                    if(location != null) {
+                        fillLocationList(location);
+                    }
+                    else if(!alreadyUpdated){
+                        updateLocation();
+                    }
+                    //TODO add notification about lack of gps signal
                 }
-                break;
+
+            });
         }
     }
 
-    public void getGPS()
+    private void fillLocationList(Location location)
     {
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
+        locationData = new ArrayList<>(6);
+        for(int i=0; i < 6; i++) {
+            locationData.add(new ArrayList());
+        }
+        locationData.get(0).add(0,"Latitude");
+        locationData.get(0).add(1,String.valueOf(location.getLatitude()));
+
+        locationData.get(1).add(0,"Altitude");
+        locationData.get(1).add(1,String.valueOf(location.getAltitude()));
+
+        locationData.get(2).add(0,"Longitude");
+        locationData.get(2).add(1,String.valueOf(location.getLongitude()));
+
+        locationData.get(3).add(0,"Altitude");
+        locationData.get(3).add(1,String.valueOf(location.getAltitude()));
+
+        locationData.get(4).add(0,"Time");
+        locationData.get(4).add(1,String.valueOf(location.getTime()));
+
+        locationData.get(5).add(0,"Accurency");
+        locationData.get(5).add(1,String.valueOf(location.getAccuracy()));
+
+        return;
+    }
+
+    private void updateLocation(){
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+        {
+            fusedLocationClient.getCurrentLocation(PRIORITY_HIGH_ACCURACY, new CancellationToken() {
+                @Override
+                public boolean isCancellationRequested() {
+                    return false;
+                }
+
+                @NonNull
+                @Override
+                public CancellationToken onCanceledRequested(@NonNull OnTokenCanceledListener onTokenCanceledListener) {
+                    return null;
+                }
+            });
+
+        }
+
+        updateLocationList(true);
 
     }
 
