@@ -35,8 +35,8 @@ public class DataCollectorLocation{
 
     private Context context;
 
-    public static final int DEFAULT_UPDATE_INTERVAL = 30;
-    public static final int FAST_UPDATE_INTERVAL = 5;
+    private static final int DEFAULT_UPDATE_INTERVAL = 30;
+    private static final int FAST_UPDATE_INTERVAL = 5;
 
     private LocationManager locationManager;
 
