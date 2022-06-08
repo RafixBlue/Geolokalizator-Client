@@ -1,4 +1,4 @@
-package com.magisterka.geolokalizator_client;
+package com.magisterka.geolokalizator_client.datacollection;
 
 
 
@@ -8,6 +8,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
+import android.content.ContentValues;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -20,7 +21,11 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.OnTokenCanceledListener;
 
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.concurrent.Executor;
 
 import static com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCURACY;
 
@@ -31,7 +36,7 @@ public class DataCollectorLocation{
 
     private LocationRequest locationRequest;
 
-    private ArrayList<ArrayList<String>> locationData;
+    private ContentValues locationData;
 
     private Context context;
 
@@ -43,7 +48,7 @@ public class DataCollectorLocation{
 
     public DataCollectorLocation(Context newContext) {
         this.context=newContext;
-
+        locationData = new ContentValues();
         locationRequest = LocationRequest.create()
                 .setInterval(DEFAULT_UPDATE_INTERVAL * 1000)
                 .setFastestInterval(FAST_UPDATE_INTERVAL * 1000)
@@ -53,7 +58,7 @@ public class DataCollectorLocation{
         LocationManager locationManager = (LocationManager) context.getSystemService(context.LOCATION_SERVICE);
     }
 
-    public ArrayList<ArrayList<String>> getLocationData()
+    public ContentValues getLocationData()
     {
         return locationData;
     }
@@ -72,15 +77,16 @@ public class DataCollectorLocation{
     {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            fusedLocationClient.getLastLocation().addOnSuccessListener((Activity) context, new OnSuccessListener<Location>() {
+
+            fusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
                 @Override
                 public void onSuccess(Location location) {
 
-                    if(location != null) {
-                        fillLocationList(location);
-                    }
-                    else if(!alreadyUpdated){
+                    if(!alreadyUpdated){
                         updateLocation();
+                    }
+                    else if(location != null) {
+                        fillLocationList(location);
                     }
                     //TODO add notification about lack of gps signal
                 }
@@ -91,27 +97,16 @@ public class DataCollectorLocation{
 
     private void fillLocationList(Location location)
     {
-        locationData = new ArrayList<>(6);
-        for(int i=0; i < 6; i++) {
-            locationData.add(new ArrayList());
-        }
-        locationData.get(0).add(0,"Latitude");
-        locationData.get(0).add(1,String.valueOf(location.getLatitude()));
 
-        locationData.get(1).add(0,"Altitude");
-        locationData.get(1).add(1,String.valueOf(location.getAltitude()));
+        locationData.put("Latitude",String.valueOf(location.getLatitude()));
 
-        locationData.get(2).add(0,"Longitude");
-        locationData.get(2).add(1,String.valueOf(location.getLongitude()));
+        locationData.put("Altitude",String.valueOf(location.getAltitude()));
 
-        locationData.get(3).add(0,"Altitude");
-        locationData.get(3).add(1,String.valueOf(location.getAltitude()));
+        locationData.put("Longitude",String.valueOf(location.getLongitude()));
 
-        locationData.get(4).add(0,"Time");
-        locationData.get(4).add(1,String.valueOf(location.getTime()));
+        locationData.put("Time",getCurrentDate());
 
-        locationData.get(5).add(0,"Accurency");
-        locationData.get(5).add(1,String.valueOf(location.getAccuracy()));
+        locationData.put("Accurency",String.valueOf(location.getAccuracy()));
 
         return;
     }
@@ -136,6 +131,17 @@ public class DataCollectorLocation{
 
         updateLocationList(true);
 
+    }
+
+    private String getCurrentDate()
+    {
+        SimpleDateFormat form = new SimpleDateFormat("HH:mm dd/MM/yyyy");
+
+        Date now = new Date();
+
+        String Date = form.format(now);
+
+        return Date;
     }
 
 }

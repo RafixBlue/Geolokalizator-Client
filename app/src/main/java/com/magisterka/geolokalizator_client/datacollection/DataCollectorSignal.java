@@ -1,6 +1,7 @@
-package com.magisterka.geolokalizator_client;
+package com.magisterka.geolokalizator_client.datacollection;
 
 import android.Manifest;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.telephony.CellInfo;
@@ -34,11 +35,9 @@ import static android.telephony.TelephonyManager.NETWORK_TYPE_UMTS;
 
 public class DataCollectorSignal {
 
-
-
     private TelephonyManager telephonyManager;
 
-    private ArrayList<ArrayList<String>> signalData;
+    private ContentValues signalData;
 
     private Context context;
 
@@ -46,31 +45,20 @@ public class DataCollectorSignal {
         context = newContext;
         telephonyManager = (TelephonyManager) newContext.getSystemService(Context.TELEPHONY_SERVICE);
 
-        ArrayList<ArrayList<String>> signalData = new ArrayList<>(6);
-        for(int i=0; i < 6; i++) {
-            signalData.add(new ArrayList());
-        }
+        signalData= new ContentValues();
 
-        //ServiceState serviceState = telephonyManager.getServiceState();
     }
 
-    public ArrayList<ArrayList<String>> getSignalData() {
+    public ContentValues getSignalData() {
+        updateSignalData();
         return signalData;
     }
 
-    public String checkDataSignal()
-    {
-        String isConnected;
-        switch (telephonyManager.getDataState()){
-            case DATA_CONNECTED: isConnected = "DATA_CONNECTED";
-            case DATA_DISCONNECTED: isConnected = "DATA_DISCONNECTED";
-            case DATA_CONNECTING: isConnected = "DATA_CONNECTING";
-            case DATA_SUSPENDED: isConnected = "DATA_SUSPENDED";
-            case DATA_DISCONNECTING: isConnected = "DATA_DISCONNECTING";
-            default: isConnected = "no";
-        }
+    public boolean checkDataSignal() {
+        //TODO add proper check
 
-        return isConnected;
+        if(getNetworkType().equals("Unknown")) { return false; }
+        else { return true; }
 
     }
 
@@ -78,31 +66,23 @@ public class DataCollectorSignal {
     {
         String rawSignalParameters;
 
-
-
         if(ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
-            rawSignalParameters  = String.valueOf(telephonyManager.getSignalStrength());
+            rawSignalParameters = String.valueOf(telephonyManager.getSignalStrength());
 
-            signalData.get(0).add(0,"Network Provider");
-            signalData.get(0).add(1,telephonyManager.getNetworkOperatorName());
+            signalData.put("Network_Provider",telephonyManager.getNetworkOperatorName());
 
-            signalData.get(1).add(0,"Network Type");
-            signalData.get(1).add(1,getNetworkType());
+            signalData.put("Network_Type",getNetworkType());
 
-            signalData.get(2).add(0,"rssi");
-            signalData.get(2).add(1, getSubstring(rawSignalParameters,"rssi="," rsrp="));
+            signalData.put("RSSI",getSubstring(rawSignalParameters,"rssi="," rsrp="));
 
-            signalData.get(3).add(0,"rsrp");
-            signalData.get(3).add(1, getSubstring(rawSignalParameters,"rsrp="," rsrq="));
+            signalData.put("RSRP",getSubstring(rawSignalParameters,"rsrp="," rsrq="));
 
-            signalData.get(4).add(0,"rsrq");
-            signalData.get(4).add(1,getSubstring(rawSignalParameters,"rsrq="," rssnr="));
+            signalData.put("RSRQ",getSubstring(rawSignalParameters,"rsrq="," rssnr="));
 
-            signalData.get(5).add(0,"rssnr");
-            signalData.get(5).add(1,getSubstring(rawSignalParameters,"rssnr="," cqiTableIndex"));
-
+            signalData.put("RSSNR",getSubstring(rawSignalParameters,"rssnr="," cqiTableIndex"));
         }
 
+        return;
     }
 
     private String getSubstring(String stringSignalParameters,String startIndex, String endIndex)
@@ -140,7 +120,7 @@ public class DataCollectorSignal {
                     networkType = "5G";
                     break;
                 default:
-                    networkType = "Unknown or No Sim Card";
+                    networkType = "Unknown";
             }
         }
 
