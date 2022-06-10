@@ -19,6 +19,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.tasks.CancellationToken;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.OnTokenCanceledListener;
+import com.magisterka.geolokalizator_client.TimeCalculator;
 
 
 import java.text.SimpleDateFormat;
@@ -45,6 +46,7 @@ public class DataCollectorLocation{
 
     private LocationManager locationManager;
 
+    private TimeCalculator timeCalculator;
 
     public DataCollectorLocation(Context newContext) {
         this.context=newContext;
@@ -56,6 +58,7 @@ public class DataCollectorLocation{
                 .setMaxWaitTime(100);
 
         LocationManager locationManager = (LocationManager) context.getSystemService(context.LOCATION_SERVICE);
+        timeCalculator = new TimeCalculator();
     }
 
     public ContentValues getLocationData()
@@ -97,6 +100,7 @@ public class DataCollectorLocation{
 
     private void fillLocationList(Location location)
     {
+        Date now = new Date();
 
         locationData.put("Latitude",String.valueOf(location.getLatitude()));
 
@@ -104,7 +108,7 @@ public class DataCollectorLocation{
 
         locationData.put("Longitude",String.valueOf(location.getLongitude()));
 
-        locationData.put("Time",getCurrentDate());
+        locationData.put("DateTime",timeCalculator.getDateTime(now));
 
         locationData.put("Accurency",String.valueOf(location.getAccuracy()));
 
@@ -131,17 +135,6 @@ public class DataCollectorLocation{
 
         updateLocationList(true);
 
-    }
-
-    private String getCurrentDate()
-    {
-        SimpleDateFormat form = new SimpleDateFormat("HH:mm dd/MM/yyyy");
-
-        Date now = new Date();
-
-        String Date = form.format(now);
-
-        return Date;
     }
 
 }

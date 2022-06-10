@@ -88,7 +88,7 @@ public class DataCollectorSignal {
     private String getSubstring(String stringSignalParameters,String startIndex, String endIndex)
     {
         String substring;
-        substring = stringSignalParameters.substring(stringSignalParameters.indexOf(startIndex)+startIndex.length(),stringSignalParameters.indexOf(endIndex));;
+        substring = stringSignalParameters.substring(stringSignalParameters.indexOf(startIndex)+startIndex.length(),stringSignalParameters.indexOf(endIndex));
         return substring;
     }
 

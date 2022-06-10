@@ -10,8 +10,9 @@ import android.database.sqlite.SQLiteOpenHelper;
 public class Database extends SQLiteOpenHelper{
 
     public Database(Context context) {
-        super(context, "BazaDanych.db", null, 5);
+        super(context, "BazaDanych.db", null, 7);
     }//Konstruktor klasy tworzy instancje bazy danych w plikach wewnetrznych telefonu.
+
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
@@ -25,7 +26,7 @@ public class Database extends SQLiteOpenHelper{
                 "Latitude TEXT, " +
                 "Altitude TEXT, " +
                 "Longitude TEXT," +
-                "Time TEXT," +
+                "DateTime TEXT," +
                 "Accurency TEXT)");
 
         sqLiteDatabase.execSQL("create Table signal" +
@@ -48,6 +49,7 @@ public class Database extends SQLiteOpenHelper{
 
     }
 
+
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
         sqLiteDatabase.execSQL("drop Table if exists profile");
@@ -64,7 +66,7 @@ public class Database extends SQLiteOpenHelper{
                 "Latitude TEXT, " +
                 "Altitude TEXT, " +
                 "Longitude TEXT," +
-                "Time TEXT," +
+                "DateTime TEXT," +
                 "Accurency TEXT)");
 
         sqLiteDatabase.execSQL("create Table signal" +
@@ -86,7 +88,9 @@ public class Database extends SQLiteOpenHelper{
                 "FOREIGN KEY (Location_ID) REFERENCES location (ID))");
 
         sqLiteDatabase.execSQL("INSERT INTO signal(ID,Network_Provider,Network_Type,RSSI,RSRP,RSRQ,RSSNR) VALUES (0,'None','None','0','0','0','0')");
+        //insertProfile(1,"test");
     }
+
 
     public boolean insertProfile(int ID, String Name)
     {
@@ -99,46 +103,35 @@ public class Database extends SQLiteOpenHelper{
         else { return true; }
     }
 
-    public boolean insertSignal(ContentValues signalData)
+
+    public boolean insert(String tableName,ContentValues values)
     {
         SQLiteDatabase db = this.getWritableDatabase();
-        long resoult = db.insert("signal",null, signalData);
-
+        long resoult = db.insert(tableName,null, values);
         if(resoult==-1) {
             return false; }
         else {
             return true; }
     }
 
-    public boolean insertLocation(ContentValues locationData)
-    {
-        SQLiteDatabase db = this.getWritableDatabase();
-        long resoult = db.insert("location",null, locationData);
 
+    private boolean insertProfileData(int profileID)
+    {
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put("Profile_ID",profileID);
+        values.put("Signal_ID",selectTopID("signal"));
+        values.put("Location_ID",selectTopID("location"));
+
+        long resoult = sqLiteDatabase.insert("profile_data",null, values);
         if(resoult==-1) {
             return false; }
         else {
             return true; }
     }
 
-    public void insertProfileData(int profileID)
-    {
-        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
-        int locationID = selectID("location");
-        int signalID=selectID("signal");
 
-        sqLiteDatabase.execSQL("INSERT INTO profile_data(Profile_ID,Signal_ID,Location_ID) VALUES ("+profileID+","+signalID+","+locationID+")");
-    }
-
-    public void insertProfileData(int profileID,int signalID)
-    {
-        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
-        int locationID = selectID("location");
-
-        sqLiteDatabase.execSQL("INSERT INTO profile_data(Profile_ID,Signal_ID,Location_ID) VALUES ("+profileID+","+signalID+","+locationID+")");
-    }
-
-    private int selectID(String table)
+    private int selectTopID(String table)
     {
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
         Cursor cursor =sqLiteDatabase.rawQuery("Select MAX(ID) From '"+table+"'",null);
@@ -146,5 +139,73 @@ public class Database extends SQLiteOpenHelper{
         int data = cursor.getInt(cursor.getColumnIndexOrThrow("MAX(ID)"));
         return data;
     }
+
+
+    public boolean insertCollectedData(ContentValues locationData,ContentValues signalData,int profileID)
+    {
+        boolean successfullyInserted;
+
+        if(signalData.isEmpty()) { return false; }
+        if(locationData.isEmpty()) { return false; }
+
+        successfullyInserted=insert("location",locationData);
+        if(!successfullyInserted) {
+            return false;
+        }
+
+        successfullyInserted=insert("signal",signalData);
+        if(!successfullyInserted){
+            deleteLastRecord("location");
+            return false;
+        }
+
+        successfullyInserted=insertProfileData(1);
+        if(!successfullyInserted){
+            deleteLastRecord("signal");
+            deleteLastRecord("location");
+            return false;
+        }
+
+        return true;
+    }
+
+
+    public void deleteLastRecord(String table)
+    {
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+
+        sqLiteDatabase.execSQL("DELETE FROM "+table+" WHERE ID=(SELECT MAX(ID) FROM "+table+")");
+
+    }
+
+    public int[] getNumberOfMeasurementsWeek()
+    {
+        int[] numberOfMeasurements = new int[7];
+
+        //TimeCalculator timeCalculator = new TimeCalculator();
+        //String[] sevenDaysDates = timeCalculator.getLastSevenDaysDates();
+        Cursor cursor;
+
+        for(int i = 0;i<7;i++)
+        {
+            cursor = countRowsLocationByDate(i);
+            cursor.moveToFirst();
+            numberOfMeasurements[i]=cursor.getInt(0);
+        }
+
+
+        return numberOfMeasurements;
+    }
+
+    private Cursor countRowsLocationByDate(int daysBack)
+    {
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+
+        //Cursor cursor = sqLiteDatabase.rawQuery("Select COUNT(ID) from location Where Date =?", new String[]{dayDates});
+        Cursor cursor = sqLiteDatabase.rawQuery("SELECT COUNT(ID) FROM location WHERE strftime('%Y %m %d',DateTime) = strftime('%Y %m %d','now','-"+daysBack+" days')",null);
+
+        return cursor;
+    }
+
 
 }

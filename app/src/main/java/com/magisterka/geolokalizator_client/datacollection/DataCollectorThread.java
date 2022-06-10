@@ -46,9 +46,7 @@ public class DataCollectorThread extends Thread {
             {
                 lastInsertTime = Calendar.getInstance();
 
-                database.insertLocation(locationCollector.getLocationData());
-                database.insertSignal(signalCollector.getSignalData());
-                database.insertProfileData(1);
+                database.insertCollectedData(locationCollector.getLocationData(),signalCollector.getSignalData(),1);
 
                 locationCollector.updateLocationList(false);
             }
