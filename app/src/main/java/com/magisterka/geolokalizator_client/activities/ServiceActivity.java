@@ -44,7 +44,7 @@ public class ServiceActivity extends AppCompatActivity {
     private DataCollectorLocation locationCollector;
     private Database database;
     private GraphDataSet graphDataSet;
-    //private TimeCalculator timeCalculator;
+
     private GraphView graph;
     private Button button_manual;
     private Button button_automatic;
@@ -61,8 +61,9 @@ public class ServiceActivity extends AppCompatActivity {
         initLayout();
 
         graph = (GraphView) findViewById(R.id.graph);
-        //TimeCalculator timeCalculator = new TimeCalculator();
-        int[] numberOfDailyMeasurements = database.getNumberOfMeasurementsWeek();
+
+        int[] numberOfDailyMeasurements = GraphDataSet.getNumberOfMeasurementsWeek(database);
+
         DataPoint[] dataPoints = graphDataSet.getActivityGraphPoints(numberOfDailyMeasurements);
         createActivityGraph(dataPoints);
     }
@@ -74,7 +75,7 @@ public class ServiceActivity extends AppCompatActivity {
         signalCollector = new DataCollectorSignal(this);
         locationCollector = new DataCollectorLocation(this);
         graphDataSet = new GraphDataSet();
-        //timeCalculator = new TimeCalculator();
+
     }
 
 
@@ -120,7 +121,7 @@ public class ServiceActivity extends AppCompatActivity {
 
     public void test(View view) {
 
-        //String[] test = timeCalculator.getLastSevenDaysDates();
+        /*//String[] test = timeCalculator.getLastSevenDaysDates();
         Date now = new Date();
 
         ContentValues locationData = new ContentValues();
@@ -139,6 +140,15 @@ public class ServiceActivity extends AppCompatActivity {
 
         int a = 5;
         int b = a;
+
+         */
+        //DataPoint[] points = GraphDataSet.getCollectorGraphPoints(database, "RSSI",5);
+
+
+        Intent intent = new Intent(ServiceActivity.this, GraphCreationActivity.class);
+        startActivity(intent);
+
+
     }
 
 
@@ -147,9 +157,8 @@ public class ServiceActivity extends AppCompatActivity {
 
         BarGraphSeries<DataPoint> series = new BarGraphSeries<>(points);
 
-        //graph.getViewport().setYAxisBoundsManual(true);
+
         graph.getViewport().setMinY(0);
-        //graph.getViewport().setMaxY(500);
 
         graph.getViewport().setXAxisBoundsManual(true);
         graph.getViewport().setMinX(0);
@@ -158,13 +167,11 @@ public class ServiceActivity extends AppCompatActivity {
         graph.getViewport().setScalable(true);
         graph.getViewport().setScalableY(false);
 
-        //graph.getViewport().setScrollable(false);
         graph.getViewport().setScalableY(false);
 
         String[] xLabels = addEmptySides(getLastSevenDates());
 
         series.setSpacing(50);
-
 
         graph.addSeries(series);
 
@@ -213,5 +220,10 @@ public class ServiceActivity extends AppCompatActivity {
         newString[middle.length+1]="";
 
         return newString;
+    }
+
+    public void goToSettings(View view) {
+        Intent intent = new Intent(ServiceActivity.this, SettingsActivity.class);
+        startActivity(intent);
     }
 }

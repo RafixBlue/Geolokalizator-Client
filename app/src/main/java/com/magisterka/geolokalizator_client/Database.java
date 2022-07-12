@@ -178,34 +178,73 @@ public class Database extends SQLiteOpenHelper{
 
     }
 
-    public int[] getNumberOfMeasurementsWeek()
-    {
-        int[] numberOfMeasurements = new int[7];
 
-        //TimeCalculator timeCalculator = new TimeCalculator();
-        //String[] sevenDaysDates = timeCalculator.getLastSevenDaysDates();
-        Cursor cursor;
-
-        for(int i = 0;i<7;i++)
-        {
-            cursor = countRowsLocationByDate(i);
-            cursor.moveToFirst();
-            numberOfMeasurements[i]=cursor.getInt(0);
-        }
-
-
-        return numberOfMeasurements;
-    }
-
-    private Cursor countRowsLocationByDate(int daysBack)
+    public Cursor countRowsLocationByDate(int daysBack,int profileID)
     {
         SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
 
-        //Cursor cursor = sqLiteDatabase.rawQuery("Select COUNT(ID) from location Where Date =?", new String[]{dayDates});
         Cursor cursor = sqLiteDatabase.rawQuery("SELECT COUNT(ID) FROM location WHERE strftime('%Y %m %d',DateTime) = strftime('%Y %m %d','now','-"+daysBack+" days')",null);
 
         return cursor;
     }
+
+
+    ////////  Graph Activity  ///////
+    public Cursor getAvailableYear(int profileID)
+    {
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        Cursor cursor = sqLiteDatabase.rawQuery("SELECT strftime('%Y',l.DateTime) FROM location l, profile_data pd WHERE Profile_ID = '" + profileID +"'GROUP BY strftime('%Y',l.DateTime)",null);
+
+        return cursor;
+
+    }
+
+    public Cursor getAvailableMonth(int profileID, String year)
+    {
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        Cursor cursor = sqLiteDatabase.rawQuery("SELECT strftime('%m',l.DateTime) FROM location l, profile_data pd WHERE pd.Profile_ID = 1 AND strftime('%Y',l.DateTime) = '"+year+"' GROUP BY strftime('%m',l.DateTime)",null);
+
+        return cursor;
+
+    }
+
+    public Cursor getAvailableDay(int profileID, String year,String month)
+    {
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        Cursor cursor = sqLiteDatabase.rawQuery("SELECT strftime('%d',l.DateTime) FROM location l, profile_data pd WHERE pd.Profile_ID = 1 AND strftime('%Y',l.DateTime) = '"+year+"' AND strftime('%m',l.DateTime) = '"+month+"' GROUP BY strftime('%d',l.DateTime)",null);
+
+        return cursor;
+
+    }
+
+    public Cursor getAvailableHour(int profileID, String year,String month,String day)
+    {
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+        Cursor cursor = sqLiteDatabase.rawQuery("SELECT strftime('%H',l.DateTime) FROM location l, profile_data pd WHERE pd.Profile_ID = '"+profileID+"' AND strftime('%Y',l.DateTime) = '"+year+"' AND strftime('%m',l.DateTime) = '"+month+"' AND strftime('%d',l.DateTime) = '"+day+"' GROUP BY strftime('%H',l.DateTime)",null);
+
+        return cursor;
+
+    }
+
+    public Cursor getHourMeasurement(String year,String month,String day, String hour)
+    {
+        SQLiteDatabase sqLiteDatabase = this.getWritableDatabase();
+
+        Cursor cursor = sqLiteDatabase.rawQuery("Select pd.ID,strftime('%M',l.DateTime), l.Accurency, s.Network_Provider,s.Network_Type,s.RSRP,s.RSRQ,s.RSSI,s.RSSNR " +
+                "From location l,profile_data pd Inner Join signal s On pd.Location_ID=l.ID AND s.ID=pd.Signal_ID Where l.ID IN (" +
+                "Select ID From location Where strftime('%Y %m %d %H',DateTime) = '" +year+ " " +month+ " " +day+" "+hour+"') " +
+                "Order BY pd.ID",null);
+
+        return cursor;
+    }
+    //Select pd.ID,strftime('%H:%M',l.DateTime), l.Accurency, s.Network_Provider,s.Network_Type,s.RSRP,s.RSRQ,s.RSSI,s.RSSNR
+    //From location l,profile_data pd
+    //Inner Join signal s
+    //On pd.Location_ID=l.ID AND s.ID=pd.Signal_ID
+    //Where l.ID IN (Select ID From location Where strftime('%Y %m %d %H',DateTime) = '2022 06 13 09')
+    //Order BY pd.ID
+
+
 
 
 }

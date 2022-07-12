@@ -6,6 +6,7 @@ import android.os.PowerManager;
 
 
 import com.magisterka.geolokalizator_client.Database;
+import com.magisterka.geolokalizator_client.SettingsHelper;
 import com.magisterka.geolokalizator_client.datacollection.DataCollectorLocation;
 import com.magisterka.geolokalizator_client.datacollection.DataCollectorSignal;
 
@@ -18,13 +19,16 @@ public class DataCollectorThread extends Thread {
     private Database database;
     private Context context;
     private Calendar lastInsertTime;
+    private SettingsHelper settingsHelper;
+    private static int MINUTE = 60000;
 
     public DataCollectorThread(Context context)
     {
-        this.context =context;
+        this.context = context;
         database = new Database(context);
         signalCollector = new DataCollectorSignal(context);
         locationCollector = new DataCollectorLocation(context);
+        settingsHelper = new SettingsHelper();
 
     }
 
@@ -59,8 +63,9 @@ public class DataCollectorThread extends Thread {
     {
 
         long timeDifference =  Calendar.getInstance().getTimeInMillis() - lastInsertTime.getTimeInMillis();
+        int timeInterval = settingsHelper.LoadSettingTimeInterval(context);
 
-        if(timeDifference > 60000 ) {
+        if(timeDifference > timeInterval*MINUTE ) {
             return true;  }
         else {
             return false; }
