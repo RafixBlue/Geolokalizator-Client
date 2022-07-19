@@ -1,9 +1,13 @@
 package com.magisterka.geolokalizator_client.activities;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
-import android.content.ContentValues;
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -14,24 +18,17 @@ import android.widget.Toast;
 
 import com.jjoe64.graphview.DefaultLabelFormatter;
 import com.jjoe64.graphview.GraphView;
-import com.jjoe64.graphview.LegendRenderer;
 import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
-import com.jjoe64.graphview.series.DataPointInterface;
-import com.jjoe64.graphview.series.OnDataPointTapListener;
-import com.jjoe64.graphview.series.PointsGraphSeries;
-import com.jjoe64.graphview.series.Series;
 
 import com.magisterka.geolokalizator_client.Database;
-import com.magisterka.geolokalizator_client.GraphDataSet;
+import com.magisterka.geolokalizator_client.GraphDataEditor;
 import com.magisterka.geolokalizator_client.R;
-import com.magisterka.geolokalizator_client.TimeCalculator;
 import com.magisterka.geolokalizator_client.datacollection.DataCollectorLocation;
 import com.magisterka.geolokalizator_client.datacollection.DataCollectorService;
 import com.magisterka.geolokalizator_client.datacollection.DataCollectorSignal;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -43,7 +40,7 @@ public class ServiceActivity extends AppCompatActivity {
     private DataCollectorSignal signalCollector;
     private DataCollectorLocation locationCollector;
     private Database database;
-    private GraphDataSet graphDataSet;
+    private GraphDataEditor graphDataEditor;
 
     private GraphView graph;
     private Button button_manual;
@@ -62,10 +59,11 @@ public class ServiceActivity extends AppCompatActivity {
 
         graph = (GraphView) findViewById(R.id.graph);
 
-        int[] numberOfDailyMeasurements = GraphDataSet.getNumberOfMeasurementsWeek(database);
+        int[] numberOfDailyMeasurements = GraphDataEditor.getNumberOfMeasurementsWeek(database);
 
-        DataPoint[] dataPoints = graphDataSet.getActivityGraphPoints(numberOfDailyMeasurements);
+        DataPoint[] dataPoints = graphDataEditor.getActivityGraphPoints(numberOfDailyMeasurements);
         createActivityGraph(dataPoints);
+
     }
 
 
@@ -74,7 +72,7 @@ public class ServiceActivity extends AppCompatActivity {
         database = new Database(this);
         signalCollector = new DataCollectorSignal(this);
         locationCollector = new DataCollectorLocation(this);
-        graphDataSet = new GraphDataSet();
+        graphDataEditor = new GraphDataEditor();
 
     }
 
@@ -89,6 +87,11 @@ public class ServiceActivity extends AppCompatActivity {
 
     public void startService(View view) {
 
+        checkPermission();
+
+
+        //DataCollectorService.isInstanceCreated();
+
         if(!button_automatic.getText().equals("Stop Automatic Measurement")) {
 
             startForegroundService(new Intent(this, DataCollectorService.class));
@@ -102,6 +105,8 @@ public class ServiceActivity extends AppCompatActivity {
 
 
     public void getMeasurement(View view) {
+
+        checkPermission();
 
         Toast.makeText(this, "Collecting data wait 30 seconds",Toast.LENGTH_SHORT).show();
 
@@ -142,7 +147,7 @@ public class ServiceActivity extends AppCompatActivity {
         int b = a;
 
          */
-        //DataPoint[] points = GraphDataSet.getCollectorGraphPoints(database, "RSSI",5);
+        //DataPoint[] points = GraphDataEditor.getCollectorGraphPoints(database, "RSSI",5);
 
 
         Intent intent = new Intent(ServiceActivity.this, GraphCreationActivity.class);
@@ -224,6 +229,71 @@ public class ServiceActivity extends AppCompatActivity {
 
     public void goToSettings(View view) {
         Intent intent = new Intent(ServiceActivity.this, SettingsActivity.class);
+        startActivity(intent);
+    }
+
+    private void checkPermission()
+    {
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WAKE_LOCK) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissionLauncher.launch(android.Manifest.permission.WAKE_LOCK);
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissionLauncher.launch(android.Manifest.permission.FOREGROUND_SERVICE);
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissionLauncher.launch(android.Manifest.permission.READ_PHONE_STATE);
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissionLauncher.launch(android.Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissionLauncher.launch(android.Manifest.permission.ACCESS_BACKGROUND_LOCATION);
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissionLauncher.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissionLauncher.launch(android.Manifest.permission.READ_EXTERNAL_STORAGE);
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_NETWORK_STATE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissionLauncher.launch(android.Manifest.permission.ACCESS_NETWORK_STATE);
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_WIFI_STATE) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissionLauncher.launch(android.Manifest.permission.ACCESS_WIFI_STATE);
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET) != PackageManager.PERMISSION_GRANTED) {
+            requestPermissionLauncher.launch(android.Manifest.permission.INTERNET);
+        }
+    }
+
+    private boolean checkForeground()
+    {
+        return true;
+    }
+
+    private ActivityResultLauncher<String> requestPermissionLauncher =
+    registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+        if (isGranted) {
+            checkPermission();
+        } else {
+            Toast.makeText(this, "This app requires permission to be granted to work properly", Toast.LENGTH_SHORT).show();
+        }
+    });
+
+
+    public void goToMapCreation(View view) {
+        checkPermission();
+        Intent intent = new Intent(ServiceActivity.this, MapCreationActivity.class);
         startActivity(intent);
     }
 }

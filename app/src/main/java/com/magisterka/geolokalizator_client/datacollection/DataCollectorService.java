@@ -13,9 +13,11 @@ import androidx.core.app.NotificationCompat;
 
 import com.magisterka.geolokalizator_client.R;
 import com.magisterka.geolokalizator_client.activities.LoginRegisterActivity;
+import com.magisterka.geolokalizator_client.activities.ServiceActivity;
 
 public class DataCollectorService extends Service {
 
+    private static DataCollectorService instance = null;
     private DataCollectorThread dataCollectorThread ;
     private static String NOTIFICATION_TITLE = "Data Collector";
     private static String NOTIFICATION_TEXT = "Data is being collected!";
@@ -23,6 +25,7 @@ public class DataCollectorService extends Service {
     public void onCreate()
     {
         super.onCreate();
+        instance = this;
         dataCollectorThread = new DataCollectorThread(this);
     }
 
@@ -43,10 +46,13 @@ public class DataCollectorService extends Service {
 
     }
 
+    public static boolean isInstanceCreated() {
+        return instance != null;
+    }
 
     private Notification createNotification()
     {
-        Intent intentNew = new Intent(this, LoginRegisterActivity.class);
+        Intent intentNew = new Intent(this, ServiceActivity.class);
         PendingIntent pendingintent = PendingIntent.getActivity(this, 0, intentNew, PendingIntent.FLAG_MUTABLE);
 
         Notification notification = new NotificationCompat.Builder(this, "ChannelID")
@@ -72,6 +78,8 @@ public class DataCollectorService extends Service {
     public void onDestroy() {
 
         dataCollectorThread.interrupt();
+
+        instance = null;
 
         stopForeground(true);
         stopSelf();

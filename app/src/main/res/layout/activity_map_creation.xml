@@ -5,10 +5,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background"
-    tools:context=".activities.GraphCreationActivity">
+    tools:context=".activities.MapCreationActivity">
 
     <Spinner
-        android:id="@+id/spinner_year_graph"
+        android:id="@+id/spinner_year_map"
         android:layout_width="186dp"
         android:layout_height="21dp"
         android:layout_marginTop="80dp"
@@ -17,7 +17,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Spinner
-        android:id="@+id/spinner_month_graph"
+        android:id="@+id/spinner_month_map"
         android:layout_width="186dp"
         android:layout_height="21dp"
         android:layout_marginTop="140dp"
@@ -26,7 +26,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Spinner
-        android:id="@+id/spinner_day_graph"
+        android:id="@+id/spinner_day_map"
         android:layout_width="186dp"
         android:layout_height="21dp"
         android:layout_marginTop="200dp"
@@ -35,7 +35,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Spinner
-        android:id="@+id/spinner_hour_graph"
+        android:id="@+id/spinner_hour_map"
         android:layout_width="186dp"
         android:layout_height="21dp"
         android:layout_marginTop="252dp"
@@ -44,14 +44,14 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/textView_year_graph"
+        android:id="@+id/textView_year_map"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="80dp"
         android:layout_marginEnd="64dp"
         android:text="Year"
         android:textColor="@color/white"
-        app:layout_constraintEnd_toStartOf="@+id/spinner_year_graph"
+        app:layout_constraintEnd_toStartOf="@+id/spinner_year_map"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -64,10 +64,10 @@
         android:layout_marginTop="40dp"
         android:text="Month"
         android:textColor="@color/white"
-        app:layout_constraintEnd_toStartOf="@+id/spinner_month_graph"
+        app:layout_constraintEnd_toStartOf="@+id/spinner_month_map"
         app:layout_constraintHorizontal_bias="0.019"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView_year_graph" />
+        app:layout_constraintTop_toBottomOf="@+id/textView_year_map" />
 
     <TextView
         android:id="@+id/textView_day_graph"
@@ -77,10 +77,10 @@
         android:layout_marginTop="104dp"
         android:text="Day"
         android:textColor="@color/white"
-        app:layout_constraintEnd_toStartOf="@+id/spinner_day_graph"
+        app:layout_constraintEnd_toStartOf="@+id/spinner_day_map"
         app:layout_constraintHorizontal_bias="0.014"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView_year_graph" />
+        app:layout_constraintTop_toBottomOf="@+id/textView_year_map" />
 
     <TextView
         android:id="@+id/textView_hour_graph"
@@ -90,69 +90,23 @@
         android:layout_marginTop="32dp"
         android:text="Hour"
         android:textColor="@color/white"
-        app:layout_constraintEnd_toStartOf="@+id/spinner_hour_graph"
+        app:layout_constraintEnd_toStartOf="@+id/spinner_hour_map"
         app:layout_constraintHorizontal_bias="0.014"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView_day_graph" />
 
-    <Switch
-        android:id="@+id/switch_rsrp_graph"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:text="RSRQ"
-        android:textColor="@color/white"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/switch_rssi_graph" />
-
-    <Switch
-        android:id="@+id/switch_rsrq__graph"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="36dp"
-        android:text="RSSI"
-        android:textColor="@color/white"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/switch_rsrp_graph" />
-
-    <Switch
-        android:id="@+id/switch_rssnr_graph"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:text="RSSNR"
-        android:textColor="@color/white"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/switch_rsrq__graph"
-        app:layout_constraintVertical_bias="0.0" />
-
-    <Switch
-        android:id="@+id/switch_rssi_graph"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="104dp"
-        android:text="RSRP"
-        android:textColor="@color/white"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/spinner_day_graph" />
-
     <Button
-        android:id="@+id/button_create_graph"
+        android:id="@+id/button_create_map"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="60dp"
-        android:text="Create Graph"
-        android:onClick="createGraph"
+        android:onClick="createMap"
+        android:text="Create Map"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.501"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/switch_rssnr_graph"
+        app:layout_constraintTop_toBottomOf="@+id/spinner_hour_map"
         app:layout_constraintVertical_bias="0.118" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

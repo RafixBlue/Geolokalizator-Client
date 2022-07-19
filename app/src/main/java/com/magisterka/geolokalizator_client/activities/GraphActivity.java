@@ -9,11 +9,10 @@ import android.os.Bundle;
 import com.jjoe64.graphview.DefaultLabelFormatter;
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.LegendRenderer;
-import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 import com.magisterka.geolokalizator_client.Database;
-import com.magisterka.geolokalizator_client.GraphDataSet;
+import com.magisterka.geolokalizator_client.GraphDataEditor;
 import com.magisterka.geolokalizator_client.R;
 
 public class GraphActivity extends AppCompatActivity {
@@ -21,16 +20,25 @@ public class GraphActivity extends AppCompatActivity {
     private GraphView graph;
     private Database database;
 
-    String year;
-    String month;
-    String day;
-    String hour;
+    private static int RSRP_CURSOR_INDEX = 5;
+    private static int RSRQ_CURSOR_INDEX = 6;
+    private static int RSSI_CURSOR_INDEX = 7;
+    private static int RSSNR_CURSOR_INDEX = 8;
+
+    private String year;
+    private String month;
+    private String day;
+    private String hour;
     boolean[] seriesToRender;
+
+    private String maxMinuteOfHour;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_graph);
+
+        database = new Database(this);
 
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
@@ -41,16 +49,16 @@ public class GraphActivity extends AppCompatActivity {
             seriesToRender = extras.getBooleanArray("series");
         }
 
-
+        maxMinuteOfHour = database.getMaxMinOfHour(year,month,day,hour);
 
         graph = (GraphView) findViewById(R.id.graph_big);
-        database = new Database(this);
+
         Cursor cursor = database.getHourMeasurement(year,month,day,hour);
 
-        DataPoint[] pointsRSRP=GraphDataSet.getCollectorGraphPoints(cursor, "RSRP",5);
-        DataPoint[] pointsRSRQ=GraphDataSet.getCollectorGraphPoints(cursor, "RSRQ",6);
-        DataPoint[] pointsRSSI=GraphDataSet.getCollectorGraphPoints(cursor, "RSSI",7);
-        DataPoint[] pointsRSSNR=GraphDataSet.getCollectorGraphPoints(cursor, "RSSNR",8);
+        DataPoint[] pointsRSRP= GraphDataEditor.getCollectorGraphPoints(cursor, "RSRP",RSRP_CURSOR_INDEX,maxMinuteOfHour);
+        DataPoint[] pointsRSRQ= GraphDataEditor.getCollectorGraphPoints(cursor, "RSRQ",RSRQ_CURSOR_INDEX,maxMinuteOfHour);
+        DataPoint[] pointsRSSI= GraphDataEditor.getCollectorGraphPoints(cursor, "RSSI",RSSI_CURSOR_INDEX,maxMinuteOfHour);
+        DataPoint[] pointsRSSNR= GraphDataEditor.getCollectorGraphPoints(cursor, "RSSNR",RSSNR_CURSOR_INDEX,maxMinuteOfHour);
 
 
         createActivityGraph(pointsRSRP,pointsRSRQ,pointsRSSI,pointsRSSNR,seriesToRender,hour);

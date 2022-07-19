@@ -14,12 +14,12 @@ import java.text.Format;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public class GraphDataSet extends ServiceActivity {
+public class GraphDataEditor extends ServiceActivity {
 
     private GraphView graph;
     private TimeCalculator timeCalculator;
 
-    public GraphDataSet() {
+    public GraphDataEditor() {
 
     }
 
@@ -35,7 +35,6 @@ public class GraphDataSet extends ServiceActivity {
             cursor.moveToFirst();
             numberOfMeasurements[i]=cursor.getInt(0);
         }
-
 
         return numberOfMeasurements;
     }
@@ -58,15 +57,14 @@ public class GraphDataSet extends ServiceActivity {
     }
 
 
-    public static DataPoint[] getCollectorGraphPoints(Cursor cursor, String dataTypeName,int index)
+    public static DataPoint[] getCollectorGraphPoints(Cursor cursor, String dataTypeName,int index,String MaxMinOfHour)
     {
-
-        //Cursor cursor = database.getHourMeasurement("2022","06","13","09");
+        int maxIndex=Integer.parseInt(MaxMinOfHour)+1;
 
         cursor.moveToFirst();
 
-        DataPoint[] points = new DataPoint[cursor.getCount()];
-        int[] pointsFill = new int[cursor.getCount()];
+        DataPoint[] points = new DataPoint[maxIndex];
+        int[] pointsFill = new int[maxIndex];
 
         for(int i =0; i < cursor.getCount();i++)
         {
@@ -74,11 +72,15 @@ public class GraphDataSet extends ServiceActivity {
             if(i>0){
                 cursor.moveToNext();
             }
-
         }
-        for(int i =0; i < cursor.getCount();i++)
+
+        for(int i =0; i < maxIndex;i++)//TODO make it a method
         {
-            if(pointsFill[i]==0 && i != 0) {
+            if(i==0)
+            {
+                points[i]=new DataPoint(i,0);
+            }
+            else if(pointsFill[i]==0 && i != 0) {
                 points[i]= new DataPoint(i,points[i-1].getY());
             }
             else {
@@ -89,11 +91,9 @@ public class GraphDataSet extends ServiceActivity {
         return points;
     }
 
-    public static String[] getDropdownFiller(Cursor cursor)
+    public static String[] getDropdownFiller(Cursor cursor) //TODO change name
     {
         String[] filler = new String[cursor.getCount()];
-
-        int a = cursor.getCount();
 
         cursor.moveToFirst();
 
@@ -101,7 +101,6 @@ public class GraphDataSet extends ServiceActivity {
         {
             filler[i] = cursor.getString(0);
             cursor.moveToNext();
-
 
         }
 

@@ -57,6 +57,24 @@ public class LoginRegisterActivity extends AppCompatActivity {
                     Toast.makeText(this, "This app requires permision to be granted to work properly", Toast.LENGTH_SHORT).show();
                 }
                 break;
+            case ACCESS_BACKGROUND_LOCATION:
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                }
+                else{
+                    Toast.makeText(this, "This app requires permision to be granted to work properly", Toast.LENGTH_SHORT).show();}
+            case READ_PHONE_STATE:
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                }
+                else{
+                    Toast.makeText(this, "This app requires permision to be granted to work properly", Toast.LENGTH_SHORT).show();}
+            case FOREGROUND_SERVICE:
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                }
+                else{
+                    Toast.makeText(this, "This app requires permision to be granted to work properly", Toast.LENGTH_SHORT).show();}
         }
     }
 
@@ -69,7 +87,7 @@ public class LoginRegisterActivity extends AppCompatActivity {
             startService(new Intent(this, DataCollectorService.class));
         }*/
 
-/*        requestPermissions(new String[]{Manifest.permission.FOREGROUND_SERVICE},FOREGROUND_SERVICE);
+       /* requestPermissions(new String[]{Manifest.permission.FOREGROUND_SERVICE},FOREGROUND_SERVICE);
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.FOREGROUND_SERVICE) != PackageManager.PERMISSION_GRANTED) {
 
             requestPermissions(new String[]{Manifest.permission.FOREGROUND_SERVICE},FOREGROUND_SERVICE);}

@@ -23,7 +23,7 @@
         android:layout_width="280dp"
         android:layout_height="56dp"
         android:onClick="startService"
-        android:text="Start Automatic Measurement"
+        android:text="Stop Automatic Measurement"
         android:textAlignment="center"
         android:textColor="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -64,11 +64,12 @@
         app:layout_constraintVertical_bias="0.716" />
 
     <Button
-        android:id="@+id/button_map"
+        android:id="@+id/button_create_graph"
         android:layout_width="278dp"
         android:layout_height="42dp"
         android:text="Show Data On Map"
         android:textColor="@color/white"
+        android:onClick="goToMapCreation"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.496"
