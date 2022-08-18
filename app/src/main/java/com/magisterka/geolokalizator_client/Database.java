@@ -14,7 +14,7 @@ public class Database extends SQLiteOpenHelper{
     }//Konstruktor klasy tworzy instancje bazy danych w plikach wewnetrznych telefonu.
 
 //TODO add check if measurement for this minute exist
-
+//TODO change Accurency to Accuracy!!!!!!!!!!!!!!!!!!!!!
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
 
@@ -234,7 +234,7 @@ public class Database extends SQLiteOpenHelper{
         Cursor cursor = sqLiteDatabase.rawQuery("Select pd.ID,strftime('%M',l.DateTime), l.Accurency, s.Network_Provider,s.Network_Type,s.RSRP,s.RSRQ,s.RSSI,s.RSSNR " +
                 "From location l,profile_data pd Inner Join signal s On pd.Location_ID=l.ID AND s.ID=pd.Signal_ID Where l.ID IN (" +
                 "Select ID From location Where strftime('%Y %m %d %H',DateTime) = '" +year+ " " +month+ " " +day+" "+hour+"') " +
-                "Order BY pd.ID",null);
+                "Order BY l.DateTime",null);//"Order BY pd.ID",null);
 
         return cursor;
     }
@@ -256,7 +256,7 @@ public class Database extends SQLiteOpenHelper{
         Cursor cursor = sqLiteDatabase.rawQuery("Select pd.ID,strftime('%H %M',l.DateTime),l.Latitude, l.Longitude, l.Altitude, l.Accurency, s.Network_Provider,s.Network_Type,s.RSRP,s.RSRQ,s.RSSI,s.RSSNR " +
                 "From location l,profile_data pd Inner Join signal s On pd.Location_ID=l.ID AND s.ID=pd.Signal_ID Where l.ID IN (" +
                 "Select ID From location Where strftime('%Y %m %d %H',DateTime) = '" +year+ " " +month+ " " +day+" "+hour+"') " +
-                "Order BY pd.ID",null);
+                "Order BY l.DateTime",null);
 
         return cursor;
     }

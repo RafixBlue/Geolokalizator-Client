@@ -4,10 +4,15 @@ import android.Manifest;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.telephony.CellInfo;
+import android.telephony.CellInfoGsm;
+import android.telephony.CellInfoLte;
+import android.telephony.CellInfoWcdma;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
 
+import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 
 import java.util.ArrayList;
@@ -45,10 +50,11 @@ public class DataCollectorSignal {
         context = newContext;
         telephonyManager = (TelephonyManager) newContext.getSystemService(Context.TELEPHONY_SERVICE);
 
-        signalData= new ContentValues();
+        signalData = new ContentValues();
 
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.Q)
     public ContentValues getSignalData() {
         updateSignalData();
         return signalData;
@@ -57,32 +63,67 @@ public class DataCollectorSignal {
     public boolean checkDataSignal() {
         //TODO add proper check
 
-        if(getNetworkType().equals("Unknown")) { return false; }
-        else { return true; }
+        if (getNetworkType().equals("Unknown")) {
+            return false;
+        } else {
+            return true;
+        }
 
     }
 
-    private void updateSignalData()
-    {
+    private void test() {
         String rawSignalParameters;
 
-        if(ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
             rawSignalParameters = String.valueOf(telephonyManager.getSignalStrength());
 
-            signalData.put("Network_Provider",telephonyManager.getNetworkOperatorName());
+            signalData.put("Network_Provider", telephonyManager.getNetworkOperatorName());
 
-            signalData.put("Network_Type",getNetworkType());
+            signalData.put("Network_Type", getNetworkType());
 
-            signalData.put("RSSI",getSubstring(rawSignalParameters,"rssi="," rsrp="));
+            signalData.put("RSSI", getSubstring(rawSignalParameters, "rssi=", " rsrp="));
 
-            signalData.put("RSRP",getSubstring(rawSignalParameters,"rsrp="," rsrq="));
+            signalData.put("RSRP", getSubstring(rawSignalParameters, "rsrp=", " rsrq="));
 
-            signalData.put("RSRQ",getSubstring(rawSignalParameters,"rsrq="," rssnr="));
+            signalData.put("RSRQ", getSubstring(rawSignalParameters, "rsrq=", " rssnr="));
 
-            signalData.put("RSSNR",getSubstring(rawSignalParameters,"rssnr="," cqiTableIndex"));
+            signalData.put("RSSNR", getSubstring(rawSignalParameters, "rssnr=", " cqiTableIndex"));
         }
 
         return;
+    }
+
+
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    private void updateSignalData() {
+
+        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) { return; }
+
+        signalData.put("Network_Provider", telephonyManager.getNetworkOperatorName());
+        signalData.put("Network_Type", getNetworkType());
+
+        List<CellInfo> cellInfoList = telephonyManager.getAllCellInfo();
+        for (CellInfo cellInfo : cellInfoList) {
+            if (cellInfo instanceof CellInfoLte) {
+                signalData.put("RSRP",((CellInfoLte) cellInfo).getCellSignalStrength().getRsrp());
+                signalData.put("RSSI",((CellInfoLte) cellInfo).getCellSignalStrength().getRssi());
+                signalData.put("RSRQ",((CellInfoLte) cellInfo).getCellSignalStrength().getRsrq());
+                signalData.put("RSSNR",((CellInfoLte) cellInfo).getCellSignalStrength().getRsrq());
+            }
+            if(cellInfo instanceof CellInfoWcdma)
+            {
+                signalData.put("RSRP","0");
+                signalData.put("RSSI",((CellInfoWcdma) cellInfo).getCellSignalStrength().getDbm());
+                signalData.put("RSRQ","0");
+                signalData.put("RSSNR","0");
+            }
+            if (cellInfo instanceof CellInfoGsm) {
+                signalData.put("RSRP","0");
+                signalData.put("RSSI",((CellInfoGsm) cellInfo).getCellSignalStrength().getRssi());
+                signalData.put("RSRQ","0");
+                signalData.put("RSSNR","0");
+            }
+        }
     }
 
     private String getSubstring(String stringSignalParameters,String startIndex, String endIndex)

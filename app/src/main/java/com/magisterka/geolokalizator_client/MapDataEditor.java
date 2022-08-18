@@ -2,18 +2,24 @@ package com.magisterka.geolokalizator_client;
 
 import android.database.Cursor;
 
+import com.magisterka.geolokalizator_client.models.HourDataGraphModel;
+import com.magisterka.geolokalizator_client.models.HourDataMapModel;
+
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MapDataEditor {
 
-    private static int TIME_CURSOR_INDEX = 1;
+    private static int DATETIME_CURSOR_INDEX = 1;
     private static int LATITUDE_CURSOR_INDEX = 2;
     private static int LONGITUDE_CURSOR_INDEX = 3;
     private static int ALTITUDE_CURSOR_INDEX = 4;
-    private static int ACCURENCY_CURSOR_INDEX = 5;
-    private static int PROVIDER_CURSOR_INDEX = 6;
+    private static int ACCURACY_CURSOR_INDEX = 5;
+    private static int NETWORK_PROVIDER_CURSOR_INDEX = 6;
     private static int NETWORK_TYPE_CURSOR_INDEX = 7;
     private static int RSRP_CURSOR_INDEX = 8;
     private static int RSRQ_CURSOR_INDEX = 9;
@@ -21,85 +27,110 @@ public class MapDataEditor {
     private static int RSSNR_CURSOR_INDEX = 11;
 
 
-    private String[] readCursor(Cursor cursor,int index)
+    public List<HourDataMapModel> cursorToMapModel(Cursor cursor)
     {
-        cursor.moveToFirst();
-        String[] cursorData = new String[cursor.getCount()];
+        List<HourDataMapModel> dataGraphModelsList = new ArrayList<HourDataMapModel>();
+        boolean lastRowFinished = false;
 
-        for(int i =0; i < cursor.getCount();i++)
+        cursor.moveToFirst();
+
+        while(!lastRowFinished)
         {
-            cursorData[i]=cursor.getString(index);
             cursor.moveToNext();
 
+            dataGraphModelsList.add(getMapModel(cursor));
+
+            lastRowFinished = cursor.isLast();
         }
-        int a = 10;
-        return cursorData;
 
+        return dataGraphModelsList;
     }
 
-    public GeoPoint getStartingPoint(Cursor cursor)
+    public HourDataMapModel getMapModel(Cursor cursor)
     {
-        cursor.moveToFirst();
-        Double dLatitude = Double.parseDouble(cursor.getString(LATITUDE_CURSOR_INDEX));
-        Double dLongitude = cursor.getDouble(LONGITUDE_CURSOR_INDEX);
+        HourDataMapModel dataMapModel = new HourDataMapModel();
 
-        GeoPoint startingPoint = new GeoPoint(dLatitude, dLongitude);
+        dataMapModel.setDateTime(cursor.getString(DATETIME_CURSOR_INDEX));
+        dataMapModel.setLatitude(cursor.getString(LATITUDE_CURSOR_INDEX));
+        dataMapModel.setLongitude(cursor.getString(LONGITUDE_CURSOR_INDEX));
+        dataMapModel.setAltitude(cursor.getString(ALTITUDE_CURSOR_INDEX));
+        dataMapModel.setAccuracy(cursor.getString(ACCURACY_CURSOR_INDEX));
+        dataMapModel.setNetwork_Provider(cursor.getString(NETWORK_PROVIDER_CURSOR_INDEX));
+        dataMapModel.setNetwork_Type(cursor.getString(NETWORK_TYPE_CURSOR_INDEX));
+        dataMapModel.setRsrp(cursor.getString(RSRP_CURSOR_INDEX));
+        dataMapModel.setRsrq(cursor.getString(RSRQ_CURSOR_INDEX));
+        dataMapModel.setRssi(cursor.getString(RSSI_CURSOR_INDEX));
+        dataMapModel.setRssnr(cursor.getString(RSSNR_CURSOR_INDEX));
 
-        return startingPoint;
+        return dataMapModel;
     }
 
-    public GeoPoint[] getMapPoints(Cursor cursor)
+    public GeoPoint[] getMapPoints(List<HourDataMapModel> data)
     {
-        String[] latitude = readCursor(cursor,LATITUDE_CURSOR_INDEX);
-        String[] longitude = readCursor(cursor,LONGITUDE_CURSOR_INDEX);
+        double Latitude;
+        double Longitude;
 
-        Double dLatitude;
-        Double dLongitude;
-        GeoPoint[] points = new GeoPoint[latitude.length];
+        int numberOfPoints = data.size();
 
-        for(int i=0;i < latitude.length;i++)
+        GeoPoint[] points = new GeoPoint[numberOfPoints];
+
+        for(int i=0;i < numberOfPoints;i++)
         {
-            dLatitude = Double.parseDouble(latitude[i]);
-            dLongitude = Double.parseDouble(longitude[i]);
+            Latitude = Double.parseDouble(data.get(i).getLatitude());
+            Longitude = Double.parseDouble(data.get(i).getLongitude());
 
-            points[i] = new GeoPoint(dLatitude, dLongitude);
+            points[i] = new GeoPoint(Latitude, Longitude);
         }
 
         return points;
     }
 
-    public String[] getMapMarkerTextArray(Cursor cursor)
+    public List<Marker> getMarkers(MapView map, List<HourDataMapModel> data)
     {
-        String[] time = readCursor(cursor,TIME_CURSOR_INDEX);
-        String[] altitude = readCursor(cursor,ALTITUDE_CURSOR_INDEX);
-        String[] accurency = readCursor(cursor,ACCURENCY_CURSOR_INDEX);
-        String[] networkProvider = readCursor(cursor,PROVIDER_CURSOR_INDEX);
-        String[] networkType = readCursor(cursor,NETWORK_TYPE_CURSOR_INDEX);
-        String[] rsrp = readCursor(cursor,RSRP_CURSOR_INDEX);
-        String[] rsrq = readCursor(cursor,RSRQ_CURSOR_INDEX);
-        String[] rssi = readCursor(cursor,RSSI_CURSOR_INDEX);
-        String[] rssnr = readCursor(cursor,RSSNR_CURSOR_INDEX);
+        List<Marker> markerList= new ArrayList<Marker>();
 
-        String[] finalText= new String[time.length];
+        GeoPoint[] points = getMapPoints(data);
+        String[] texts= getMapMarkerTextList(data);
 
-        for(int i=0;i<cursor.getCount();i++)
+        for(int i=0;i< texts.length;i++)
         {
-            finalText[i]=getMapMarkerText(time[i],altitude[i],accurency[i],networkProvider[i],networkType[i],rsrp[i],rsrq[i],rssi[i],rssnr[i]);
+
+            markerList.add(getMarker(map,points[i],texts[i]));
+        }
+
+        return markerList;
+    }
+
+    private Marker getMarker(MapView map, GeoPoint point , String text)
+    {
+        Marker marker;
+        marker = new Marker(map);
+        marker.setTitle(text);
+        marker.setPosition(point);
+
+        return marker;
+    }
+
+    public String[] getMapMarkerTextList(List<HourDataMapModel> mapModels)
+    {
+        int numberOfModels = mapModels.size();
+
+        String[] finalText= new String[numberOfModels];
+
+        for(int i=0; i < numberOfModels; i++)
+        {
+            finalText[i]=getMapMarkerText(mapModels.get(i));
         }
 
         return finalText;
     }
 
-    public String getMapMarkerText(String time, String altitude, String accurency, String networkProvider, String networkType,   String rsrp, String rsrq, String rssi, String rssnr)
+    private String getMapMarkerText(HourDataMapModel mapModel)
     {
-        altitude=altitude.substring(0,altitude.indexOf(".")+2);
-        accurency=accurency.substring(0,accurency.indexOf(".")+2);
-
-        String topText = networkProvider + " " + networkType + " " + time + "\n";
-        String middleText = "RSSI = "+rssi+"dB RSRP = "+rsrp+"dB\nRSRQ = "+rsrq+"dB RSSNR = "+rssnr+"dB\n";
-        String bottomText = "Accurency "+accurency+"m Altitude "+altitude+"m";
-
-        String text = topText+middleText+bottomText;
+        String text = mapModel.getNetwork_Provider() + " " + mapModel.getNetwork_Type() + " " + mapModel.getDateTime() + "\n " +
+                "RSSI = "+ mapModel.getRssi()+"dB RSRP = " + mapModel.getRsrp() +"dB\n" +
+                "RSRQ = " + mapModel.getRsrq()+ "dB RSSNR = " + mapModel.getRssnr() + "dB\n " +
+                "Accuracy "+mapModel.getAccuracy()+"m Altitude " + mapModel.getAltitude() + "m";
 
         return text;
     }

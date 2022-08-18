@@ -20,8 +20,9 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.GeolokalizatorClient">
-        <activity android:name=".activities.MapActivity"></activity>
+        android:theme="@style/Theme.GeolokalizatorClient"
+        android:usesCleartextTraffic="true">
+        <activity android:name=".activities.MapActivity"/>
         <activity android:name=".activities.MapCreationActivity" />
         <activity android:name=".activities.GraphCreationActivity" />
         <activity android:name=".activities.GraphActivity" />

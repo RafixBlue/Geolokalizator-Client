@@ -2,15 +2,27 @@ package com.magisterka.geolokalizator_client.activities;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.telephony.CellInfo;
+import android.telephony.CellInfoCdma;
+import android.telephony.CellInfoGsm;
+import android.telephony.CellInfoLte;
+import android.telephony.CellInfoNr;
+import android.telephony.CellInfoTdscdma;
+import android.telephony.CellInfoWcdma;
+import android.telephony.CellSignalStrengthWcdma;
+import android.telephony.TelephonyManager;
 import android.view.View;
 import android.widget.Button;
 
@@ -31,11 +43,14 @@ import com.magisterka.geolokalizator_client.datacollection.DataCollectorSignal;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 
 public class ServiceActivity extends AppCompatActivity {
 
     private static long DAY_IN_MILLISECONDS = 86400000;
+
+    int Dbm, rsrp, rssi;
 
     private DataCollectorSignal signalCollector;
     private DataCollectorLocation locationCollector;
@@ -67,8 +82,7 @@ public class ServiceActivity extends AppCompatActivity {
     }
 
 
-    private void initClasses()
-    {
+    private void initClasses() {
         database = new Database(this);
         signalCollector = new DataCollectorSignal(this);
         locationCollector = new DataCollectorLocation(this);
@@ -77,10 +91,9 @@ public class ServiceActivity extends AppCompatActivity {
     }
 
 
-    private void initLayout()
-    {
-        button_manual=findViewById(R.id.button_manual);
-        button_automatic=findViewById(R.id.button_automatic);
+    private void initLayout() {
+        button_manual = findViewById(R.id.button_manual);
+        button_automatic = findViewById(R.id.button_automatic);
 
     }
 
@@ -92,12 +105,11 @@ public class ServiceActivity extends AppCompatActivity {
 
         //DataCollectorService.isInstanceCreated();
 
-        if(!button_automatic.getText().equals("Stop Automatic Measurement")) {
+        if (!button_automatic.getText().equals("Stop Automatic Measurement")) {
 
             startForegroundService(new Intent(this, DataCollectorService.class));
             button_automatic.setText("Stop Automatic Measurement");
-        }
-        else if(!button_automatic.getText().equals("Start Automatic Measurement")) {
+        } else if (!button_automatic.getText().equals("Start Automatic Measurement")) {
             stopService(new Intent(this, DataCollectorService.class));
             button_automatic.setText("Start Automatic Measurement");
         }
@@ -108,7 +120,7 @@ public class ServiceActivity extends AppCompatActivity {
 
         checkPermission();
 
-        Toast.makeText(this, "Collecting data wait 30 seconds",Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Collecting data wait 30 seconds", Toast.LENGTH_SHORT).show();
 
         locationCollector.updateLocationList(false);
 
@@ -116,7 +128,7 @@ public class ServiceActivity extends AppCompatActivity {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                database.insertCollectedData(locationCollector.getLocationData(),signalCollector.getSignalData(),1);
+                database.insertCollectedData(locationCollector.getLocationData(), signalCollector.getSignalData(), 1);
 
             }
         }, 20000);
@@ -124,6 +136,7 @@ public class ServiceActivity extends AppCompatActivity {
     }
 
 
+    @RequiresApi(api = Build.VERSION_CODES.Q)
     public void test(View view) {
 
         /*//String[] test = timeCalculator.getLastSevenDaysDates();

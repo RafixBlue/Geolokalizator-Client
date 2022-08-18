@@ -11,108 +11,164 @@ import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.LegendRenderer;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
+import com.magisterka.geolokalizator_client.CallServerApi.ApiCallAccessData;
 import com.magisterka.geolokalizator_client.Database;
 import com.magisterka.geolokalizator_client.GraphDataEditor;
 import com.magisterka.geolokalizator_client.R;
+import com.magisterka.geolokalizator_client.models.GraphDataPointsModel;
+import com.magisterka.geolokalizator_client.models.HourDataGraphModel;
+import com.magisterka.geolokalizator_client.models.HourDataMapModel;
+
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class GraphActivity extends AppCompatActivity {
 
+    private GraphDataEditor graphDataEditor;
+    private GraphDataPointsModel pointsModel;
     private GraphView graph;
     private Database database;
 
-    private static int RSRP_CURSOR_INDEX = 5;
-    private static int RSRQ_CURSOR_INDEX = 6;
-    private static int RSSI_CURSOR_INDEX = 7;
-    private static int RSSNR_CURSOR_INDEX = 8;
+    private ApiCallAccessData apiCallAccessData;
+    private static String BASE_URL = "http://192.168.1.74/geolokalizator/data/";
+
+    public boolean showRSRP;
+    public boolean showRSRQ;
+    public boolean showRSSI;
+    public boolean showRSSNR;
+    public boolean showAccuracy;
 
     private String year;
     private String month;
     private String day;
     private String hour;
-    boolean[] seriesToRender;
 
-    private String maxMinuteOfHour;
+    private static boolean dataFromOnlineDatabase;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_graph);
 
+        graphDataEditor = new GraphDataEditor();
+
         database = new Database(this);
 
+        pointsModel = new GraphDataPointsModel(60);
+
+        graph = (GraphView) findViewById(R.id.graph_big);
+
+        getExtras();
+
+        if(dataFromOnlineDatabase) {
+            initDataAccessApi();
+            createGraphFromOnlineDataBase();
+        }
+        else {
+            createGraphFromLocalDataBase();
+        }
+    }
+
+    private void createGraphFromLocalDataBase()
+    {
+
+        Cursor cursor = database.getHourMeasurement(year,month,day,hour);
+
+        List<HourDataGraphModel> data = graphDataEditor.cursorToGraphModelList(cursor);
+
+        pointsModel = graphDataEditor.setDataPoints(data,60);
+
+        createGraph();
+
+    }
+
+    private void createGraphFromOnlineDataBase()
+    {
+        Call<List<HourDataGraphModel>> call = apiCallAccessData.getGraphDataByHour(1,Integer.parseInt(year),Integer.parseInt(month),Integer.parseInt(day),Integer.parseInt(hour));
+        callDropdownHandler(call);
+    }
+
+    private void initDataAccessApi()
+    {
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        apiCallAccessData = retrofit.create(ApiCallAccessData.class);
+    }
+
+    private void callDropdownHandler(Call<List<HourDataGraphModel>> call)
+    {
+        call.enqueue(new Callback<List<HourDataGraphModel>>() {
+            @Override
+            public void onResponse(Call<List<HourDataGraphModel>> call, Response<List<HourDataGraphModel>> response) {
+
+                if(response.code() != 200) { return; }//TODO Add info about error
+
+                List<HourDataGraphModel> dataFromCall = response.body();
+                pointsModel = graphDataEditor.setDataPoints(dataFromCall,60);
+                createGraph();
+            }
+
+            @Override
+            public void onFailure(Call<List<HourDataGraphModel>> call, Throwable t) { }
+
+        });
+    }
+
+    private void getExtras()
+    {
         Bundle extras = getIntent().getExtras();
         if (extras != null) {
+            dataFromOnlineDatabase=extras.getBoolean("dataFromOnlineDatabase");
             year = extras.getString("year");
             month = extras.getString("month");
             day = extras.getString("day");
             hour = extras.getString("hour");
-            seriesToRender = extras.getBooleanArray("series");
+            showRSRP = extras.getBoolean("showRSRP");
+            showRSRQ = extras.getBoolean("showRSRQ");
+            showRSSI = extras.getBoolean("showRSSI");
+            showRSSNR = extras.getBoolean("showRSSNR");
         }
-
-        maxMinuteOfHour = database.getMaxMinOfHour(year,month,day,hour);
-
-        graph = (GraphView) findViewById(R.id.graph_big);
-
-        Cursor cursor = database.getHourMeasurement(year,month,day,hour);
-
-        DataPoint[] pointsRSRP= GraphDataEditor.getCollectorGraphPoints(cursor, "RSRP",RSRP_CURSOR_INDEX,maxMinuteOfHour);
-        DataPoint[] pointsRSRQ= GraphDataEditor.getCollectorGraphPoints(cursor, "RSRQ",RSRQ_CURSOR_INDEX,maxMinuteOfHour);
-        DataPoint[] pointsRSSI= GraphDataEditor.getCollectorGraphPoints(cursor, "RSSI",RSSI_CURSOR_INDEX,maxMinuteOfHour);
-        DataPoint[] pointsRSSNR= GraphDataEditor.getCollectorGraphPoints(cursor, "RSSNR",RSSNR_CURSOR_INDEX,maxMinuteOfHour);
-
-
-        createActivityGraph(pointsRSRP,pointsRSRQ,pointsRSSI,pointsRSSNR,seriesToRender,hour);
     }
 
 
 
-    private String[] GraphHourLabels(String Hour)
+
+    private void AddSeriesToGraph(DataPoint[] points, String title, int color)
     {
-        String[] HourLabels = new String[60];
-
-        for(int i =0;i<60;i++)
-        {
-            if(i < 10) {
-                HourLabels[i] = Hour +":0"+ i;
-            }
-            else {
-                HourLabels[i] = Hour +":"+ i;
-            }
-
-        }
-
-        return HourLabels;
+        LineGraphSeries<DataPoint> series = new LineGraphSeries<>(points);
+        series.setTitle(title);
+        series.setColor(color);
+        graph.addSeries(series);
     }
 
-    private void createActivityGraph(DataPoint[] pointsRSRP,DataPoint[] pointsRSRQ,DataPoint[] pointsRSSI,DataPoint[] pointsRSSNR, boolean[] seriesToRender, String hour)
+    private void createGraph()
     {
-
-        if(seriesToRender[0]==true) {
-            LineGraphSeries<DataPoint> seriesRSRP = new LineGraphSeries<>(pointsRSRP);
-            seriesRSRP.setTitle("RSRP");
-            seriesRSRP.setColor(Color.BLUE);
-            graph.addSeries(seriesRSRP);
+        if(showRSRP) {
+            AddSeriesToGraph(pointsModel.pointsRSRP, "RSRP", Color.BLUE);
         }
 
-        if(seriesToRender[1]==true) {
-            LineGraphSeries<DataPoint> seriesRSRQ = new LineGraphSeries<>(pointsRSRQ);
-            seriesRSRQ.setTitle("RSRQ");
-            seriesRSRQ.setColor(Color.RED);
-            graph.addSeries(seriesRSRQ);
+        if(showRSRQ) {
+            AddSeriesToGraph(pointsModel.pointsRSRQ, "RSRQ", Color.GREEN);
         }
 
-        if(seriesToRender[2]==true) {
-            LineGraphSeries<DataPoint> seriesRSSI = new LineGraphSeries<>(pointsRSSI);
-            seriesRSSI.setTitle("RSSI");
-            seriesRSSI.setColor(Color.YELLOW);
-            graph.addSeries(seriesRSSI);
+        if(showRSSI) {
+            AddSeriesToGraph(pointsModel.pointsRSSI, "RSSI", Color.YELLOW);
         }
 
-        if(seriesToRender[3]==true) {
-            LineGraphSeries<DataPoint> seriesRSSNR = new LineGraphSeries<>(pointsRSSNR);
-            seriesRSSNR.setTitle("RSSNR");
-            seriesRSSNR.setColor(Color.GREEN);
-            graph.addSeries(seriesRSSNR);
+        if(showRSSNR) {
+            AddSeriesToGraph(pointsModel.pointsRSSNR, "RSSNR", Color.RED);
+        }
+
+        if(showAccuracy) {
+            AddSeriesToGraph(pointsModel.pointsAccuracy, "Accuracy", Color.CYAN);
         }
 
         graph.getLegendRenderer().setVisible(true);
@@ -126,7 +182,7 @@ public class GraphActivity extends AppCompatActivity {
         graph.getViewport().setScalable(true);
         graph.getViewport().setScalableY(true);
 
-        String[] xLabels = GraphHourLabels(hour);
+        String[] xLabels = graphDataEditor.graphHourLabels(hour);
 
         graph.getGridLabelRenderer().setLabelFormatter(new DefaultLabelFormatter() {
             @Override

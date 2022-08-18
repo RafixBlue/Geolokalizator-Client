@@ -110,7 +110,7 @@ public class DataCollectorLocation{
 
         locationData.put("DateTime",timeCalculator.getDateTime(now));
 
-        locationData.put("Accurency",String.valueOf(location.getAccuracy()));
+        locationData.put("Accuracy",String.valueOf(location.getAccuracy()));
 
         return;
     }
