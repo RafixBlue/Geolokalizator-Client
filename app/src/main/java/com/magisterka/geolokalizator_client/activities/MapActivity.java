@@ -2,32 +2,28 @@ package com.magisterka.geolokalizator_client.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.Manifest;
 import android.content.Context;
-import android.database.Cursor;
 import android.os.Bundle;
-import android.os.StrictMode;
 import android.preference.PreferenceManager;
 
-import com.magisterka.geolokalizator_client.CallServerApi.ApiCallAccessData;
-import com.magisterka.geolokalizator_client.Database;
-import com.magisterka.geolokalizator_client.MapDataEditor;
+import com.magisterka.geolokalizator_client.database.DatabaseMap;
+import com.magisterka.geolokalizator_client.sharedpreferences.AccountInfoHelper;
+import com.magisterka.geolokalizator_client.callserverapi.ApiCallAccessData;
+import com.magisterka.geolokalizator_client.activities.datahandling.MapDataEditor;
 import com.magisterka.geolokalizator_client.R;
-import com.magisterka.geolokalizator_client.models.HourDataGraphModel;
-import com.magisterka.geolokalizator_client.models.HourDataMapModel;
+import com.magisterka.geolokalizator_client.models.accessdatamodels.HourDataMapModel;
 
 import org.osmdroid.config.Configuration;
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory;
-import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.CustomZoomButtonsController;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.Marker;
-import org.osmdroid.views.overlay.OverlayItem;
 import org.osmdroid.views.overlay.compass.CompassOverlay;
 
-import java.util.ArrayList;
 import java.util.List;
 
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -37,6 +33,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class MapActivity extends AppCompatActivity {
 
     private ApiCallAccessData apiCallAccessData;
+    private AccountInfoHelper accountInfoHelper;
     private static String BASE_URL = "http://192.168.1.74/geolokalizator/data/";
 
     private List<HourDataMapModel> mapModels;
@@ -44,7 +41,7 @@ public class MapActivity extends AppCompatActivity {
 
     private MapView map;
     private MapDataEditor mapDataEditor;
-    private Database database;
+    private DatabaseMap databaseMap;
 
     private String year;
     private String month;
@@ -53,13 +50,13 @@ public class MapActivity extends AppCompatActivity {
 
     private static boolean dataFromOnlineDatabase;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_map);
 
+        accountInfoHelper = new AccountInfoHelper(this);
         Context ctx = getApplicationContext();
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx));
 
@@ -69,7 +66,7 @@ public class MapActivity extends AppCompatActivity {
 
         mapDataEditor = new MapDataEditor();
 
-        database = new Database(this);
+        databaseMap = new DatabaseMap(this);
 
         if(dataFromOnlineDatabase) {
             initDataAccessApi();
@@ -82,9 +79,7 @@ public class MapActivity extends AppCompatActivity {
 
     private void createMapFromLocalDataBase()
     {
-        Cursor cursor = database.getHourMeasurementWithLocation(year,month,day,hour);
-
-        mapModels = mapDataEditor.cursorToMapModel(cursor);
+        mapModels = databaseMap.getHourMeasurementWithLocation(year,month,day,hour);
 
         markerList = mapDataEditor.getMarkers(map,mapModels);
 
@@ -93,7 +88,8 @@ public class MapActivity extends AppCompatActivity {
 
     private void createMapFromOnlineDataBase()
     {
-        Call<List<HourDataMapModel>> call = apiCallAccessData.getMapDataByHour(1,Integer.parseInt(year),Integer.parseInt(month),Integer.parseInt(day),Integer.parseInt(hour));
+        String token = accountInfoHelper.getToken();
+        Call<List<HourDataMapModel>> call = apiCallAccessData.getMapDataByHour(token,Integer.parseInt(year),Integer.parseInt(month),Integer.parseInt(day),Integer.parseInt(hour));
         callDropdownHandler(call);
     }
 
@@ -120,12 +116,24 @@ public class MapActivity extends AppCompatActivity {
 
     private void initDataAccessApi()
     {
+        OkHttpClient client = RetrofitLogging();
+
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(BASE_URL)
+                .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
         apiCallAccessData = retrofit.create(ApiCallAccessData.class);
+    }
+
+    private OkHttpClient RetrofitLogging()
+    {
+        HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
+        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(interceptor).build();
+
+        return client;
     }
 
     public void createMap()
@@ -141,6 +149,7 @@ public class MapActivity extends AppCompatActivity {
 
         CompassOverlay compassOverlay = new CompassOverlay(this, map);
         compassOverlay.enableCompass();
+
         map.getOverlays().add(compassOverlay);
 
         map.getOverlays().addAll(markerList);

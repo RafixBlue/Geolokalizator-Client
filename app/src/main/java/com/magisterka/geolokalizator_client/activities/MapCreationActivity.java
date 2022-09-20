@@ -3,22 +3,26 @@ package com.magisterka.geolokalizator_client.activities;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.Spinner;
+import android.widget.Switch;
 
-import com.magisterka.geolokalizator_client.CallServerApi.ApiCallTime;
-import com.magisterka.geolokalizator_client.Database;
-import com.magisterka.geolokalizator_client.MapDataEditor;
+import com.magisterka.geolokalizator_client.database.DatabaseDateDropdownFiller;
+import com.magisterka.geolokalizator_client.sharedpreferences.AccountInfoHelper;
+import com.magisterka.geolokalizator_client.callserverapi.ApiCallTime;
+import com.magisterka.geolokalizator_client.activities.datahandling.MapDataEditor;
 import com.magisterka.geolokalizator_client.R;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -27,27 +31,34 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MapCreationActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener{
 
-    Database database;
-    ApiCallTime apiCallTime;
+    private DatabaseDateDropdownFiller database;
+    private ApiCallTime apiCallTime;
 
-    Map<String, Spinner> dropdownMap;
+    private Map<String, Spinner> dropdownMap;
+
+    private int clientUserId;
+    private String token;
 
     private static String BASE_URL = "http://192.168.1.74/geolokalizator/time/";
-    private static boolean DATA_FROM_ONLINE_DATABASE = false;
+    private static boolean DATA_FROM_ONLINE_DATABASE;
+    private boolean dataFromOnlineDatabase;
+    private AccountInfoHelper accountInfoHelper;
 
-    Spinner dropdownYear;
-    Spinner dropdownMonth;
-    Spinner dropdownDay;
-    Spinner dropdownHour;
+    private Spinner dropdownYear;
+    private Spinner dropdownMonth;
+    private Spinner dropdownDay;
+    private Spinner dropdownHour;
 
-    Button buttonCreateMap;
+    private Switch switchOnlineData;
 
-    MapDataEditor mapDataEditor;
+    private Button buttonCreateMap;
 
-    String year;
-    String month;
-    String day;
-    String hour;
+    private MapDataEditor mapDataEditor;
+
+    private String year;
+    private String month;
+    private String day;
+    private String hour;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,11 +67,15 @@ public class MapCreationActivity extends AppCompatActivity implements AdapterVie
 
         initClasses();
 
+        initInfo();
+
         initLayout();
 
         disableOnStart();
 
         setItemSelection();
+
+        OnCheckedChangeListener();
 
         mapDropdowns();
 
@@ -85,23 +100,44 @@ public class MapCreationActivity extends AppCompatActivity implements AdapterVie
 
     private void initDataAccessApi()
     {
+        OkHttpClient client = RetrofitLogging();
+
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(BASE_URL)
+                .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
         apiCallTime = retrofit.create(ApiCallTime.class);
     }
 
+    private OkHttpClient RetrofitLogging()
+    {
+        HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
+        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(interceptor).build();
+
+        return client;
+    }
+
+    private void initInfo()
+    {
+        clientUserId = accountInfoHelper.getClientUserId();
+        token = accountInfoHelper.getToken();
+    }
+
     private void initClasses()
     {
-        database = new Database(this);
+        database = new DatabaseDateDropdownFiller(this);
 
         mapDataEditor = new MapDataEditor();
+
+        accountInfoHelper = new AccountInfoHelper(this);
     }
 
     private void initLayout()
     {
+        switchOnlineData = findViewById((R.id.switch_online_map));
         dropdownYear = findViewById(R.id.spinner_year_map);
         dropdownMonth = findViewById(R.id.spinner_month_map);
         dropdownDay = findViewById(R.id.spinner_day_map);
@@ -129,59 +165,55 @@ public class MapCreationActivity extends AppCompatActivity implements AdapterVie
 
     private void setDataForDropdownYear(String dropdownType)
     {
-        if(DATA_FROM_ONLINE_DATABASE) {
-            Call<String[]> call = apiCallTime.getAvailableYears(1);
+        if(dataFromOnlineDatabase) {
+            Call<String[]> call = apiCallTime.getAvailableYears(token);
             callDropdownHandler(call,"year");
             return;
         }
 
-        Cursor rawDropdownData = database.getAvailableYear(1);
-        String[] dropdownData = mapDataEditor.getDropdownFiller(rawDropdownData);
-        fillDropdownFromServer(dropdownYear, dropdownData);
+        String[] dropdownArray = database.getAvailableYear();
+        fillDropdown(dropdownYear, dropdownArray);
     }
 
     private void setDataForDropdownMonth()
     {
-        if(DATA_FROM_ONLINE_DATABASE) {
-            Call<String[]> call = apiCallTime.getAvailableMonths(1, Integer.parseInt(year));
+        if(dataFromOnlineDatabase) {
+            Call<String[]> call = apiCallTime.getAvailableMonths(token, Integer.parseInt(year));
             callDropdownHandler(call,"month");
             return;
         }
 
-        Cursor rawDropdownData = database.getAvailableMonth(1,year);
-        String[] dropdownData = mapDataEditor.getDropdownFiller(rawDropdownData);
-        fillDropdownFromServer(dropdownMonth, dropdownData);
+        String[] dropdownArray = database.getAvailableMonth(year);
+        fillDropdown(dropdownMonth, dropdownArray);
     }
 
     private void setDataForDropdownDay()
     {
-        if(DATA_FROM_ONLINE_DATABASE) {
-            Call<String[]> call = apiCallTime.getAvailableDays(1, Integer.parseInt(year),Integer.parseInt(month));
+        if(dataFromOnlineDatabase) {
+            Call<String[]> call = apiCallTime.getAvailableDays(token, Integer.parseInt(year),Integer.parseInt(month));
             callDropdownHandler(call,"day");
             return;
         }
 
-        Cursor rawDropdownData = database.getAvailableDay(1,year,month);
-        String[] dropdownData = mapDataEditor.getDropdownFiller(rawDropdownData);
-        fillDropdownFromServer(dropdownDay, dropdownData);
+        String[] dropdownArray = database.getAvailableDay(year,month);
+        fillDropdown(dropdownDay, dropdownArray);
     }
 
     private void setDataForDropdownHour()
     {
-        if(DATA_FROM_ONLINE_DATABASE) {
-            Call<String[]> call = apiCallTime.getAvailableHours(1, Integer.parseInt(year),Integer.parseInt(month),Integer.parseInt(day));
+        if(dataFromOnlineDatabase) {
+            Call<String[]> call = apiCallTime.getAvailableHours(token, Integer.parseInt(year),Integer.parseInt(month),Integer.parseInt(day));
             callDropdownHandler(call,"hour");
             return;
         }
 
-        Cursor rawDropdownData = database.getAvailableHour(1,year,month,day);
-        String[] dropdownData = mapDataEditor.getDropdownFiller(rawDropdownData);
-        fillDropdownFromServer(dropdownHour, dropdownData);
+        String[] dropdownArray = database.getAvailableHour(year,month,day);
+        fillDropdown(dropdownHour, dropdownArray);
     }
 
-    private void fillDropdownFromServer(Spinner dropdown, String[] items)
+    private void fillDropdown(Spinner dropdown, String[] items)
     {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, items);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.spinner_dropdown_layout, items);
         dropdown.setAdapter(adapter);
     }
 
@@ -197,7 +229,7 @@ public class MapCreationActivity extends AppCompatActivity implements AdapterVie
 
                 Spinner dropdown = dropdownMap.get(dropdownType);
 
-                fillDropdownFromServer(dropdown,dataFromCall);
+                fillDropdown(dropdown,dataFromCall);
 
 
             }
@@ -249,6 +281,16 @@ public class MapCreationActivity extends AppCompatActivity implements AdapterVie
     @Override
     public void onNothingSelected(AdapterView<?> adapterView) {
 
+    }
+
+    public void OnCheckedChangeListener()
+    {
+        switchOnlineData.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                dataFromOnlineDatabase = switchOnlineData.isChecked();
+                setDataForDropdownYear("year");
+            }
+        });
     }
 
 

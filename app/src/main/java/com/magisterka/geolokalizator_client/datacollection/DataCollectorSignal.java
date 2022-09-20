@@ -1,6 +1,7 @@
 package com.magisterka.geolokalizator_client.datacollection;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -94,7 +95,7 @@ public class DataCollectorSignal {
     }
 
 
-    @RequiresApi(api = Build.VERSION_CODES.Q)
+
     private void updateSignalData() {
 
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) { return; }
@@ -106,14 +107,18 @@ public class DataCollectorSignal {
         for (CellInfo cellInfo : cellInfoList) {
             if (cellInfo instanceof CellInfoLte) {
                 signalData.put("RSRP",((CellInfoLte) cellInfo).getCellSignalStrength().getRsrp());
-                signalData.put("RSSI",((CellInfoLte) cellInfo).getCellSignalStrength().getRssi());
                 signalData.put("RSRQ",((CellInfoLte) cellInfo).getCellSignalStrength().getRsrq());
                 signalData.put("RSSNR",((CellInfoLte) cellInfo).getCellSignalStrength().getRsrq());
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    signalData.put("RSSI", ((CellInfoLte) cellInfo).getCellSignalStrength().getRssi()); }
+                else {
+                    signalData.put("RSSI","0"); }
             }
             if(cellInfo instanceof CellInfoWcdma)
             {
-                signalData.put("RSRP","0");
-                signalData.put("RSSI",((CellInfoWcdma) cellInfo).getCellSignalStrength().getDbm());
+                signalData.put("RSRP",((CellInfoWcdma) cellInfo).getCellSignalStrength().getDbm());
+                signalData.put("RSSI","0");
                 signalData.put("RSRQ","0");
                 signalData.put("RSSNR","0");
             }
@@ -124,6 +129,7 @@ public class DataCollectorSignal {
                 signalData.put("RSSNR","0");
             }
         }
+
     }
 
     private String getSubstring(String stringSignalParameters,String startIndex, String endIndex)

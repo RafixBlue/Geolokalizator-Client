@@ -1,4 +1,4 @@
-package com.magisterka.geolokalizator_client.models;
+package com.magisterka.geolokalizator_client.models.accessdatamodels;
 
 public class HourDataGraphModel {
     private String dateTime;
@@ -41,8 +41,8 @@ public class HourDataGraphModel {
         this.network_Provider = network_Provider;
     }
 
-    public void setAccuracy(String accurency) {
-        this.accuracy = accurency;
+    public void setAccuracy(String accuracy) {
+        this.accuracy = accuracy;
     }
 
     public void setDateTime(String dateTime) {

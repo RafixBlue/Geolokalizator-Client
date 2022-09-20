@@ -4,109 +4,170 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background"
+    android:background="@drawable/appgradient3"
     tools:context=".activities.MapCreationActivity">
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="300dp"
+        android:layout_height="270dp"
+        android:layout_marginTop="160dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.495"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/buttons_colors_white" />
 
     <Spinner
         android:id="@+id/spinner_year_map"
         android:layout_width="186dp"
-        android:layout_height="21dp"
-        android:layout_marginTop="80dp"
-        android:layout_marginEnd="52dp"
+        android:layout_height="25dp"
+        android:layout_marginTop="25dp"
+        android:textColor="@color/black"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintHorizontal_bias="0.8"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/spinner_timezone_map" />
+
+    <Spinner
+        android:id="@+id/spinner_timezone_map"
+        android:layout_width="186dp"
+        android:layout_height="25dp"
+        android:layout_marginTop="18dp"
+        android:textColor="@color/black"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.8"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/imageView" />
 
     <Spinner
         android:id="@+id/spinner_month_map"
         android:layout_width="186dp"
-        android:layout_height="21dp"
-        android:layout_marginTop="140dp"
-        android:layout_marginEnd="52dp"
+        android:layout_height="25dp"
+        android:layout_marginTop="25dp"
+        android:textColor="@color/black"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintHorizontal_bias="0.8"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/spinner_year_map" />
 
     <Spinner
         android:id="@+id/spinner_day_map"
         android:layout_width="186dp"
-        android:layout_height="21dp"
-        android:layout_marginTop="200dp"
-        android:layout_marginEnd="52dp"
+        android:layout_height="25dp"
+        android:layout_marginTop="25dp"
+        android:textColor="@color/black"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintHorizontal_bias="0.8"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/spinner_month_map" />
 
     <Spinner
         android:id="@+id/spinner_hour_map"
         android:layout_width="186dp"
-        android:layout_height="21dp"
-        android:layout_marginTop="252dp"
-        android:layout_marginEnd="52dp"
+        android:layout_height="25dp"
+        android:layout_marginTop="25dp"
+        android:textColor="@color/black"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintHorizontal_bias="0.8"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/spinner_day_map" />
+
+    <TextView
+        android:id="@+id/textView_timezone_map"
+        android:layout_width="85dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:text="TimeZone"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.199"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/imageView" />
 
     <TextView
         android:id="@+id/textView_year_map"
-        android:layout_width="wrap_content"
+        android:layout_width="81dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="80dp"
-        android:layout_marginEnd="64dp"
+        android:layout_marginTop="26dp"
         android:text="Year"
-        android:textColor="@color/white"
-        app:layout_constraintEnd_toStartOf="@+id/spinner_year_map"
-        app:layout_constraintHorizontal_bias="1.0"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.202"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/textView_timezone_map" />
 
     <TextView
-        android:id="@+id/textView_month__graph"
-        android:layout_width="wrap_content"
+        android:id="@+id/textView_month_map"
+        android:layout_width="81dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="80dp"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="26dp"
         android:text="Month"
-        android:textColor="@color/white"
-        app:layout_constraintEnd_toStartOf="@+id/spinner_month_map"
-        app:layout_constraintHorizontal_bias="0.019"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.201"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView_year_map" />
 
     <TextView
-        android:id="@+id/textView_day_graph"
-        android:layout_width="wrap_content"
+        android:id="@+id/textView_day_map"
+        android:layout_width="81dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="80dp"
-        android:layout_marginTop="104dp"
+        android:layout_marginTop="26dp"
         android:text="Day"
-        android:textColor="@color/white"
-        app:layout_constraintEnd_toStartOf="@+id/spinner_day_map"
-        app:layout_constraintHorizontal_bias="0.014"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.201"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView_year_map" />
+        app:layout_constraintTop_toBottomOf="@+id/textView_month_map" />
 
     <TextView
-        android:id="@+id/textView_hour_graph"
-        android:layout_width="wrap_content"
+        android:id="@+id/textView_hour_map"
+        android:layout_width="81dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="80dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="26dp"
         android:text="Hour"
-        android:textColor="@color/white"
-        app:layout_constraintEnd_toStartOf="@+id/spinner_hour_map"
-        app:layout_constraintHorizontal_bias="0.014"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="18sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.2"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView_day_graph" />
+        app:layout_constraintTop_toBottomOf="@+id/textView_day_map" />
 
-    <Button
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/button_create_map"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="60dp"
+        android:layout_height="60dp"
+        android:layout_marginTop="90dp"
+        android:background="@drawable/buttons_colors_white"
+        android:foreground="?attr/selectableItemBackground"
         android:onClick="createMap"
         android:text="Create Map"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:textColor="@color/black"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.501"
+        app:layout_constraintHorizontal_bias="0.498"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/spinner_hour_map"
-        app:layout_constraintVertical_bias="0.118" />
+        app:layout_constraintTop_toBottomOf="@+id/imageView" />
+
+    <Switch
+        android:id="@+id/switch_online_map"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:text="Online data"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toTopOf="@+id/imageView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.9"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

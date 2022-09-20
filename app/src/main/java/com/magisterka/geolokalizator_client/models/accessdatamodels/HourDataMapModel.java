@@ -1,4 +1,4 @@
-package com.magisterka.geolokalizator_client.models;
+package com.magisterka.geolokalizator_client.models.accessdatamodels;
 
 public class HourDataMapModel {
 

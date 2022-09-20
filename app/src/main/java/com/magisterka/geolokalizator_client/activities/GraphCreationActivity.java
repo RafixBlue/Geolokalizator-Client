@@ -3,23 +3,26 @@ package com.magisterka.geolokalizator_client.activities;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.Spinner;
 import android.widget.Switch;
 
-import com.magisterka.geolokalizator_client.CallServerApi.ApiCallTime;
-import com.magisterka.geolokalizator_client.Database;
-import com.magisterka.geolokalizator_client.GraphDataEditor;
+import com.magisterka.geolokalizator_client.database.DatabaseDateDropdownFiller;
+import com.magisterka.geolokalizator_client.sharedpreferences.AccountInfoHelper;
+import com.magisterka.geolokalizator_client.callserverapi.ApiCallTime;
+import com.magisterka.geolokalizator_client.activities.datahandling.GraphDataEditor;
 import com.magisterka.geolokalizator_client.R;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -28,10 +31,17 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class GraphCreationActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener{
 
-    private Database database;
+
+    private DatabaseDateDropdownFiller database;
     private ApiCallTime apiCallTime;
     private Map<String, Spinner> dropdownMap;
     private Map<String, Boolean> switchStates;
+
+    private boolean dataFromOnlineDatabase;
+    private AccountInfoHelper accountInfoHelper;
+    private int clientUserId;
+    private String token;
+
 
     private static String BASE_URL = "http://192.168.1.74/geolokalizator/time/";
     private static boolean DATA_FROM_ONLINE_DATABASE = false;
@@ -40,6 +50,7 @@ public class GraphCreationActivity extends AppCompatActivity implements AdapterV
     private Switch switchRSRQ;
     private Switch switchRSSI;
     private Switch switchRSSNR;
+    private Switch switchOnlineData;
 
     private Spinner dropdownYear;
     private Spinner dropdownMonth;
@@ -62,22 +73,28 @@ public class GraphCreationActivity extends AppCompatActivity implements AdapterV
 
         initClasses();
 
+        initInfo();
+
         initLayout();
 
         disableOnStart();
 
         setItemSelection();
 
-        //fillDropdownYear();
+        OnCheckedChangeListener();
 
         mapDropdowns();
 
-        if(DATA_FROM_ONLINE_DATABASE) {
-            initDataAccessApi();
-        }
+        initDataAccessApi();
 
         setDataForDropdownYear("year");
 
+    }
+
+    private void initInfo()
+    {
+        clientUserId = accountInfoHelper.getClientUserId();
+        token = accountInfoHelper.getToken();
     }
 
     private void mapDropdowns()
@@ -93,18 +110,30 @@ public class GraphCreationActivity extends AppCompatActivity implements AdapterV
 
     private void initDataAccessApi()
     {
+        OkHttpClient client = RetrofitLogging();
+
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(BASE_URL)
+                .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
         apiCallTime = retrofit.create(ApiCallTime.class);
     }
 
+    private OkHttpClient RetrofitLogging()
+    {
+        HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
+        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(interceptor).build();
+
+        return client;
+    }
     private void initClasses()
     {
-        database = new Database(this);
+        database = new DatabaseDateDropdownFiller(this);
         graphDataEditor = new GraphDataEditor();
+        accountInfoHelper = new AccountInfoHelper(this);
     }
 
     private void initLayout()
@@ -115,6 +144,7 @@ public class GraphCreationActivity extends AppCompatActivity implements AdapterV
         switchRSRQ = findViewById(R.id.switch_rsrq__graph);
         switchRSSI = findViewById(R.id.switch_rssi_graph);
         switchRSSNR = findViewById(R.id.switch_rssnr_graph);
+        switchOnlineData = findViewById(R.id.switch_online_graph);
 
         dropdownYear = findViewById(R.id.spinner_year_graph);
         dropdownMonth = findViewById(R.id.spinner_month_graph);
@@ -141,59 +171,55 @@ public class GraphCreationActivity extends AppCompatActivity implements AdapterV
 
     private void setDataForDropdownYear(String dropdownType)
     {
-        if(DATA_FROM_ONLINE_DATABASE) {
-            Call<String[]> call = apiCallTime.getAvailableYears(1);
+        if(dataFromOnlineDatabase) {
+            Call<String[]> call = apiCallTime.getAvailableYears(token);
             callDropdownHandler(call,"year");
             return;
         }
 
-        Cursor rawDropdownData = database.getAvailableYear(1);
-        String[] dropdownData = graphDataEditor.getDropdownFiller(rawDropdownData);
-        fillDropdownFromServer(dropdownYear, dropdownData);
+        String[] dropdownArray = database.getAvailableYear();
+        fillDropdown(dropdownYear, dropdownArray);
     }
 
     private void setDataForDropdownMonth()
     {
-        if(DATA_FROM_ONLINE_DATABASE) {
-            Call<String[]> call = apiCallTime.getAvailableMonths(1, Integer.parseInt(year));
+        if(dataFromOnlineDatabase) {
+            Call<String[]> call = apiCallTime.getAvailableMonths(token, Integer.parseInt(year));
             callDropdownHandler(call,"month");
             return;
         }
 
-        Cursor rawDropdownData = database.getAvailableMonth(1,year);
-        String[] dropdownData = graphDataEditor.getDropdownFiller(rawDropdownData);
-        fillDropdownFromServer(dropdownMonth, dropdownData);
+        String[] dropdownArray = database.getAvailableMonth(year);
+        fillDropdown(dropdownMonth, dropdownArray);
     }
 
     private void setDataForDropdownDay()
     {
-        if(DATA_FROM_ONLINE_DATABASE) {
-            Call<String[]> call = apiCallTime.getAvailableDays(1, Integer.parseInt(year),Integer.parseInt(month));
+        if(dataFromOnlineDatabase) {
+            Call<String[]> call = apiCallTime.getAvailableDays(token, Integer.parseInt(year),Integer.parseInt(month));
             callDropdownHandler(call,"day");
             return;
         }
 
-        Cursor rawDropdownData = database.getAvailableDay(1,year,month);
-        String[] dropdownData = graphDataEditor.getDropdownFiller(rawDropdownData);
-        fillDropdownFromServer(dropdownDay, dropdownData);
+        String[] dropdownArray = database.getAvailableDay(year,month);
+        fillDropdown(dropdownDay, dropdownArray);
     }
 
     private void setDataForDropdownHour()
     {
-        if(DATA_FROM_ONLINE_DATABASE) {
-            Call<String[]> call = apiCallTime.getAvailableHours(1, Integer.parseInt(year),Integer.parseInt(month),Integer.parseInt(day));
+        if(dataFromOnlineDatabase) {
+            Call<String[]> call = apiCallTime.getAvailableHours(token, Integer.parseInt(year),Integer.parseInt(month),Integer.parseInt(day));
             callDropdownHandler(call,"hour");
             return;
         }
 
-        Cursor rawDropdownData = database.getAvailableHour(1,year,month,day);
-        String[] dropdownData = graphDataEditor.getDropdownFiller(rawDropdownData);
-        fillDropdownFromServer(dropdownHour, dropdownData);
+        String[] dropdownArray = database.getAvailableHour(year,month,day);
+        fillDropdown(dropdownHour, dropdownArray);
     }
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    private void fillDropdownFromServer(Spinner dropdown, String[] items)
+    private void fillDropdown(Spinner dropdown, String[] items)
     {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, items);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.spinner_dropdown_layout, items);
         dropdown.setAdapter(adapter);
     }
 
@@ -209,7 +235,7 @@ public class GraphCreationActivity extends AppCompatActivity implements AdapterV
 
                 Spinner dropdown = dropdownMap.get(dropdownType);
 
-                fillDropdownFromServer(dropdown,dataFromCall);
+                fillDropdown(dropdown,dataFromCall);
 
             }
 
@@ -266,6 +292,16 @@ public class GraphCreationActivity extends AppCompatActivity implements AdapterV
     @Override
     public void onNothingSelected(AdapterView<?> adapterView) {
 
+    }
+
+    public void OnCheckedChangeListener()
+    {
+        switchOnlineData.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                dataFromOnlineDatabase = switchOnlineData.isChecked();
+                setDataForDropdownYear("year");
+            }
+        });
     }
 
 }

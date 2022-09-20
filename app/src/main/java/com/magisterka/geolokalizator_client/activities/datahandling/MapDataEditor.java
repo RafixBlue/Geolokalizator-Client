@@ -1,9 +1,8 @@
-package com.magisterka.geolokalizator_client;
+package com.magisterka.geolokalizator_client.activities.datahandling;
 
 import android.database.Cursor;
 
-import com.magisterka.geolokalizator_client.models.HourDataGraphModel;
-import com.magisterka.geolokalizator_client.models.HourDataMapModel;
+import com.magisterka.geolokalizator_client.models.accessdatamodels.HourDataMapModel;
 
 import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
@@ -135,18 +134,4 @@ public class MapDataEditor {
         return text;
     }
 
-    public String[] getDropdownFiller(Cursor cursor) { //TODO better name here too
-
-        String[] filler = new String[cursor.getCount()];
-
-        cursor.moveToFirst();
-
-        for(int i =0; i < cursor.getCount();i++)
-        {
-            filler[i] = cursor.getString(0);
-            cursor.moveToNext();
-        }
-
-        return filler;
-    }
 }

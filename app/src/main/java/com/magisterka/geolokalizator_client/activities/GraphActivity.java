@@ -11,13 +11,14 @@ import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.LegendRenderer;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
-import com.magisterka.geolokalizator_client.CallServerApi.ApiCallAccessData;
-import com.magisterka.geolokalizator_client.Database;
-import com.magisterka.geolokalizator_client.GraphDataEditor;
+import com.magisterka.geolokalizator_client.database.DatabaseChart;
+import com.magisterka.geolokalizator_client.sharedpreferences.AccountInfoHelper;
+import com.magisterka.geolokalizator_client.callserverapi.ApiCallAccessData;
+import com.magisterka.geolokalizator_client.database.DbContext;
+import com.magisterka.geolokalizator_client.activities.datahandling.GraphDataEditor;
 import com.magisterka.geolokalizator_client.R;
-import com.magisterka.geolokalizator_client.models.GraphDataPointsModel;
-import com.magisterka.geolokalizator_client.models.HourDataGraphModel;
-import com.magisterka.geolokalizator_client.models.HourDataMapModel;
+import com.magisterka.geolokalizator_client.models.accessdatamodels.GraphDataPointsModel;
+import com.magisterka.geolokalizator_client.models.accessdatamodels.HourDataGraphModel;
 
 import java.util.List;
 
@@ -32,7 +33,8 @@ public class GraphActivity extends AppCompatActivity {
     private GraphDataEditor graphDataEditor;
     private GraphDataPointsModel pointsModel;
     private GraphView graph;
-    private Database database;
+    private DatabaseChart databaseChart;
+    private AccountInfoHelper accountInfoHelper;
 
     private ApiCallAccessData apiCallAccessData;
     private static String BASE_URL = "http://192.168.1.74/geolokalizator/data/";
@@ -55,9 +57,11 @@ public class GraphActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_graph);
 
+        accountInfoHelper = new AccountInfoHelper(this);
+
         graphDataEditor = new GraphDataEditor();
 
-        database = new Database(this);
+        databaseChart = new DatabaseChart(this);
 
         pointsModel = new GraphDataPointsModel(60);
 
@@ -77,9 +81,7 @@ public class GraphActivity extends AppCompatActivity {
     private void createGraphFromLocalDataBase()
     {
 
-        Cursor cursor = database.getHourMeasurement(year,month,day,hour);
-
-        List<HourDataGraphModel> data = graphDataEditor.cursorToGraphModelList(cursor);
+        List<HourDataGraphModel> data = databaseChart.getHourMeasurement(year,month,day,hour);
 
         pointsModel = graphDataEditor.setDataPoints(data,60);
 
@@ -89,7 +91,9 @@ public class GraphActivity extends AppCompatActivity {
 
     private void createGraphFromOnlineDataBase()
     {
-        Call<List<HourDataGraphModel>> call = apiCallAccessData.getGraphDataByHour(1,Integer.parseInt(year),Integer.parseInt(month),Integer.parseInt(day),Integer.parseInt(hour));
+        String token = accountInfoHelper.getToken();
+
+        Call<List<HourDataGraphModel>> call = apiCallAccessData.getGraphDataByHour(token,Integer.parseInt(year),Integer.parseInt(month),Integer.parseInt(day),Integer.parseInt(hour));
         callDropdownHandler(call);
     }
 
@@ -137,9 +141,6 @@ public class GraphActivity extends AppCompatActivity {
             showRSSNR = extras.getBoolean("showRSSNR");
         }
     }
-
-
-
 
     private void AddSeriesToGraph(DataPoint[] points, String title, int color)
     {

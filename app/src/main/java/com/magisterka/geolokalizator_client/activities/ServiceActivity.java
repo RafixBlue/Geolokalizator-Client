@@ -2,27 +2,17 @@ package com.magisterka.geolokalizator_client.activities;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Build;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.telephony.CellInfo;
-import android.telephony.CellInfoCdma;
-import android.telephony.CellInfoGsm;
-import android.telephony.CellInfoLte;
-import android.telephony.CellInfoNr;
-import android.telephony.CellInfoTdscdma;
-import android.telephony.CellInfoWcdma;
-import android.telephony.CellSignalStrengthWcdma;
-import android.telephony.TelephonyManager;
 import android.view.View;
 import android.widget.Button;
 
@@ -33,8 +23,10 @@ import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.BarGraphSeries;
 import com.jjoe64.graphview.series.DataPoint;
 
-import com.magisterka.geolokalizator_client.Database;
-import com.magisterka.geolokalizator_client.GraphDataEditor;
+import com.magisterka.geolokalizator_client.database.DatabaseChart;
+import com.magisterka.geolokalizator_client.database.DatabaseDataCollection;
+import com.magisterka.geolokalizator_client.database.DbContext;
+import com.magisterka.geolokalizator_client.activities.datahandling.GraphDataEditor;
 import com.magisterka.geolokalizator_client.R;
 import com.magisterka.geolokalizator_client.datacollection.DataCollectorLocation;
 import com.magisterka.geolokalizator_client.datacollection.DataCollectorService;
@@ -43,7 +35,6 @@ import com.magisterka.geolokalizator_client.datacollection.DataCollectorSignal;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 
 
 public class ServiceActivity extends AppCompatActivity {
@@ -54,7 +45,8 @@ public class ServiceActivity extends AppCompatActivity {
 
     private DataCollectorSignal signalCollector;
     private DataCollectorLocation locationCollector;
-    private Database database;
+    private DatabaseChart databaseChart;
+    private DatabaseDataCollection databaseDataCollection;
     private GraphDataEditor graphDataEditor;
 
     private GraphView graph;
@@ -74,7 +66,7 @@ public class ServiceActivity extends AppCompatActivity {
 
         graph = (GraphView) findViewById(R.id.graph);
 
-        int[] numberOfDailyMeasurements = GraphDataEditor.getNumberOfMeasurementsWeek(database);
+        int[] numberOfDailyMeasurements = databaseChart.getWeeksMeasurementCount();
 
         DataPoint[] dataPoints = graphDataEditor.getActivityGraphPoints(numberOfDailyMeasurements);
         createActivityGraph(dataPoints);
@@ -83,7 +75,8 @@ public class ServiceActivity extends AppCompatActivity {
 
 
     private void initClasses() {
-        database = new Database(this);
+        databaseDataCollection = new DatabaseDataCollection(this);
+        databaseChart = new DatabaseChart(this);
         signalCollector = new DataCollectorSignal(this);
         locationCollector = new DataCollectorLocation(this);
         graphDataEditor = new GraphDataEditor();
@@ -102,7 +95,6 @@ public class ServiceActivity extends AppCompatActivity {
 
         checkPermission();
 
-
         //DataCollectorService.isInstanceCreated();
 
         if (!button_automatic.getText().equals("Stop Automatic Measurement")) {
@@ -115,7 +107,7 @@ public class ServiceActivity extends AppCompatActivity {
         }
     }
 
-
+    @SuppressLint("NewApi")
     public void getMeasurement(View view) {
 
         checkPermission();
@@ -128,40 +120,15 @@ public class ServiceActivity extends AppCompatActivity {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                database.insertCollectedData(locationCollector.getLocationData(), signalCollector.getSignalData(), 1);
+                //TODO fix
+                databaseDataCollection.insertCollectedData(locationCollector.getLocationData(), signalCollector.getSignalData());
 
             }
         }, 20000);
 
     }
 
-
-    @RequiresApi(api = Build.VERSION_CODES.Q)
     public void test(View view) {
-
-        /*//String[] test = timeCalculator.getLastSevenDaysDates();
-        Date now = new Date();
-
-        ContentValues locationData = new ContentValues();
-
-        locationData.put("Latitude","222");
-
-        locationData.put("Altitude","345");
-
-        locationData.put("Longitude","444");
-
-        locationData.put("DateTime","2022-06-04 12:30");
-
-        locationData.put("Accurency","20");
-
-        database.insert("location",locationData);
-
-        int a = 5;
-        int b = a;
-
-         */
-        //DataPoint[] points = GraphDataEditor.getCollectorGraphPoints(database, "RSSI",5);
-
 
         Intent intent = new Intent(ServiceActivity.this, GraphCreationActivity.class);
         startActivity(intent);
@@ -189,6 +156,7 @@ public class ServiceActivity extends AppCompatActivity {
 
         String[] xLabels = addEmptySides(getLastSevenDates());
 
+        series.setColor(Color.WHITE);
         series.setSpacing(50);
 
         graph.addSeries(series);
@@ -309,4 +277,7 @@ public class ServiceActivity extends AppCompatActivity {
         Intent intent = new Intent(ServiceActivity.this, MapCreationActivity.class);
         startActivity(intent);
     }
+
+
+
 }

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheckedTextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="180dp"
+    android:layout_height="25dp"
+    android:padding="3dp"
+    android:text="test"
+    android:textColor="@color/white"
+    android:textSize="16sp"
+    android:background="@drawable/button_colors"
+    android:foreground="?attr/selectableItemBackground">
+
+</CheckedTextView>

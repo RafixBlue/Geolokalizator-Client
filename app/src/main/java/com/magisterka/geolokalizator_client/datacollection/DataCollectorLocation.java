@@ -26,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 import java.util.concurrent.Executor;
 
 import static com.google.android.gms.location.LocationRequest.PRIORITY_HIGH_ACCURACY;
@@ -102,6 +103,9 @@ public class DataCollectorLocation{
     {
         Date now = new Date();
 
+        TimeZone timeZone = TimeZone.getDefault();
+        String sTimeZone = timeZone.getDisplayName(false, TimeZone.SHORT);
+
         locationData.put("Latitude",String.valueOf(location.getLatitude()));
 
         locationData.put("Altitude",String.valueOf(location.getAltitude()));
@@ -111,6 +115,8 @@ public class DataCollectorLocation{
         locationData.put("DateTime",timeCalculator.getDateTime(now));
 
         locationData.put("Accuracy",String.valueOf(location.getAccuracy()));
+
+        locationData.put("Time_Zone",sTimeZone);
 
         return;
     }

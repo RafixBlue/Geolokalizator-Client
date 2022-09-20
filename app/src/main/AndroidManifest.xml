@@ -28,16 +28,16 @@
         <activity android:name=".activities.GraphActivity" />
         <activity android:name=".activities.SettingsActivity" />
         <activity
-            android:name=".activities.ServiceActivity"
+            android:name=".activities.LoginActivity"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.MAIN" />.
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
-            android:name=".activities.LoginRegisterActivity"
+            android:name=".activities.ServiceActivity"
             android:exported="true" />
 
         <service

@@ -12,7 +12,6 @@ import android.os.IBinder;
 import androidx.core.app.NotificationCompat;
 
 import com.magisterka.geolokalizator_client.R;
-import com.magisterka.geolokalizator_client.activities.LoginRegisterActivity;
 import com.magisterka.geolokalizator_client.activities.ServiceActivity;
 
 public class DataCollectorService extends Service {

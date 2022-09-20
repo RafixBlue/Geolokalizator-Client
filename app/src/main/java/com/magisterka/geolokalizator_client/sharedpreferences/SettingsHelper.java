@@ -1,4 +1,4 @@
-package com.magisterka.geolokalizator_client;
+package com.magisterka.geolokalizator_client.sharedpreferences;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -21,7 +21,7 @@ public class SettingsHelper {
 
     }
 
-    public int LoadSettingTimeInterval(Context context) {
+    public int loadSettingTimeInterval(Context context) {
         SharedPreferences settingsPreferences = context.getSharedPreferences(PREFERENCES, MODE_PRIVATE);
         SharedPreferences.Editor settingsEditor = settingsPreferences.edit();
 
